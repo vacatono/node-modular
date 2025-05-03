@@ -5,9 +5,19 @@ interface NodeBoxProps {
   id: string;
   label: string;
   children: React.ReactNode;
+  hasInputHandle?: boolean;
+  hasOutputHandle?: boolean;
+  hasControlHandle?: boolean;
 }
 
-const NodeBox = ({ id, label, children }: NodeBoxProps) => {
+const NodeBox = ({
+  id,
+  label,
+  children,
+  hasInputHandle = true,
+  hasOutputHandle = true,
+  hasControlHandle = false,
+}: NodeBoxProps) => {
   return (
     <Box
       sx={{
@@ -18,8 +28,19 @@ const NodeBox = ({ id, label, children }: NodeBoxProps) => {
         minWidth: 200,
       }}
     >
-      <Handle type="source" position={Position.Right} id={`${id}-output`} />
-      <Handle type="target" position={Position.Left} id={`${id}-input`} style={{ top: '50%' }} />
+      {hasOutputHandle && <Handle type="source" position={Position.Right} id={`${id}-output`} />}
+      {hasInputHandle && <Handle type="target" position={Position.Left} id={`${id}-input`} style={{ top: '50%' }} />}
+      {hasControlHandle && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          id={`${id}-control`}
+          style={{
+            top: '25%',
+            background: '#ff9800', // コントロール用ハンドルをオレンジ色で区別
+          }}
+        />
+      )}
       <Typography variant="subtitle1">{label}</Typography>
       {children}
     </Box>
