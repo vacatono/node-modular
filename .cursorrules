@@ -1,0 +1,19 @@
+{
+  "language": "ja",
+  "commit": {
+    "message": {
+      "language": "ja",
+      "format": {
+        "type": "string",
+        "pattern": "^[^\\s].{1,50}$",
+        "description": "コミットメッセージは50文字以内で入力してください"
+      }
+    }
+  },
+  "code": {
+    "comments": {
+      "language": "ja",
+      "style": "JSDoc"
+    }
+  }
+}
