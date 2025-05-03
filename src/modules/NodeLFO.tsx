@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
-import { Box, Typography, Slider } from '@mui/material';
+import { Box, Typography, Slider, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import * as Tone from 'tone';
 
 interface NodeLFOProps {
@@ -11,11 +11,14 @@ interface NodeLFOProps {
     frequency?: number;
     type?: Tone.ToneOscillatorType;
     amplitude?: number;
+    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
   };
+  id: string;
 }
 
-const NodeLFO = ({ data }: NodeLFOProps) => {
+const NodeLFO = ({ data, id }: NodeLFOProps) => {
   const lfo = useRef<Tone.LFO | null>(null);
+  const outputSignal = useRef<Tone.Signal | null>(null);
 
   useEffect(() => {
     lfo.current = new Tone.LFO({
@@ -24,10 +27,24 @@ const NodeLFO = ({ data }: NodeLFOProps) => {
       amplitude: data.amplitude || 1,
     });
 
+    // 出力用のSignalを作成
+    outputSignal.current = new Tone.Signal(0);
+
+    // LFOの出力をSignalに接続
+    lfo.current.connect(outputSignal.current);
+
+    // LFOを開始
+    lfo.current.start();
+
+    // Tone.jsのオブジェクトを登録
+    data.registerAudioNode(id, outputSignal.current);
+
     return () => {
+      lfo.current?.stop();
       lfo.current?.dispose();
+      outputSignal.current?.dispose();
     };
-  }, [data.frequency, data.type, data.amplitude]);
+  }, [id, data.frequency, data.type, data.amplitude, data.registerAudioNode]);
 
   const handleFrequencyChange = useCallback((event: Event, value: number | number[]) => {
     if (lfo.current && typeof value === 'number') {
@@ -41,9 +58,9 @@ const NodeLFO = ({ data }: NodeLFOProps) => {
     }
   }, []);
 
-  const handleTypeChange = useCallback((type: Tone.ToneOscillatorType) => {
+  const handleTypeChange = useCallback((event: SelectChangeEvent) => {
     if (lfo.current) {
-      lfo.current.type = type;
+      lfo.current.type = event.target.value as Tone.ToneOscillatorType;
     }
   }, []);
 
@@ -68,18 +85,17 @@ const NodeLFO = ({ data }: NodeLFOProps) => {
         <Slider min={0} max={1} step={0.01} defaultValue={data.amplitude || 1} onChange={handleAmplitudeChange} />
       </Box>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Wave Type</Typography>
-        <select
-          onChange={(e) => handleTypeChange(e.target.value as Tone.ToneOscillatorType)}
-          defaultValue={data.type || 'sine'}
-        >
-          <option value="sine">Sine</option>
-          <option value="square">Square</option>
-          <option value="triangle">Triangle</option>
-          <option value="sawtooth">Sawtooth</option>
-        </select>
+        <FormControl fullWidth size="small">
+          <InputLabel>Wave Type</InputLabel>
+          <Select defaultValue={data.type || 'sine'} onChange={handleTypeChange}>
+            <MenuItem value="sine">Sine</MenuItem>
+            <MenuItem value="square">Square</MenuItem>
+            <MenuItem value="triangle">Triangle</MenuItem>
+            <MenuItem value="sawtooth">Sawtooth</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Right} id="output" />
     </Box>
   );
 };

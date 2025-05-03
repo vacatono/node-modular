@@ -39,35 +39,34 @@ const nodeTypes: NodeTypes = {
 
 const initialNodes: Node[] = [
   {
-    id: 'vco1',
-    type: 'vco',
-    position: { x: 100, y: 100 },
-    data: { label: 'VCO', frequency: 440, type: 'sine', registerAudioNode: null },
+    id: 'lfo1',
+    type: 'lfo',
+    position: { x: 50, y: 100 },
+    data: { label: 'LFO', frequency: 1, type: 'sine', amplitude: 1, registerAudioNode: null },
   },
   {
-    id: 'filter1',
-    type: 'filter',
-    position: { x: 300, y: 100 },
-    data: { label: 'Filter', frequency: 1000, type: 'lowpass', Q: 1, registerAudioNode: null },
+    id: 'vco1',
+    type: 'vco',
+    position: { x: 200, y: 100 },
+    data: { label: 'VCO', frequency: 440, type: 'sine', registerAudioNode: null },
   },
   {
     id: 'oscilloscope1',
     type: 'oscilloscope',
-    position: { x: 550, y: 100 },
+    position: { x: 350, y: 100 },
     data: { label: 'Oscilloscope', registerAudioNode: null },
   },
   {
     id: 'toDestination',
     type: 'toDestination',
-    position: { x: 800, y: 100 },
+    position: { x: 500, y: 100 },
     data: { label: 'Output', volume: -6, registerAudioNode: null },
     deletable: false,
   },
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: 'vco1', target: 'filter1' },
-  { id: 'e2-3', source: 'filter1', target: 'oscilloscope1' },
+  { id: 'e2-3', source: 'vco1', target: 'oscilloscope1' },
   { id: 'e3-4', source: 'oscilloscope1', target: 'toDestination' },
 ];
 
@@ -80,6 +79,12 @@ const NodeEditor = () => {
   // Tone.jsのオブジェクトを登録する関数
   const registerAudioNode = useCallback(
     (nodeId: string, audioNode: Tone.ToneAudioNode) => {
+      // 既存の接続を解除
+      const existingNode = audioNodes.get(nodeId);
+      if (existingNode) {
+        existingNode.disconnect();
+      }
+
       audioNodes.set(nodeId, audioNode);
 
       // このノードに接続している既存のエッジを探して再接続
@@ -97,9 +102,18 @@ const NodeEditor = () => {
           }
         }
       });
+
+      // 出力ノードの場合は、直接Destinationに接続
+      if (nodeId === 'toDestination') {
+        audioNode.toDestination();
+      }
     },
     [edges]
   );
+
+  const getAudioNode = useCallback((nodeId: string) => {
+    return audioNodes.get(nodeId);
+  }, []);
 
   // エッジが追加されたときの処理
   const onConnect = useCallback(
@@ -215,15 +229,6 @@ const NodeEditor = () => {
           <Button variant="contained" onClick={() => addNode('oscilloscope')}>
             Add Oscilloscope
           </Button>
-          <CustomSlider
-            label="Frequency"
-            min={20}
-            max={2000}
-            step={1}
-            onChange={(e) => {
-              console.log(e);
-            }}
-          />
         </Stack>
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -231,7 +236,7 @@ const NodeEditor = () => {
           nodes={nodes.map((node) => ({
             ...node,
             style: getNodeStyle(node),
-            data: { ...node.data, registerAudioNode },
+            data: { ...node.data, registerAudioNode, getAudioNode },
           }))}
           edges={edges}
           onNodesChange={onNodesChange}
