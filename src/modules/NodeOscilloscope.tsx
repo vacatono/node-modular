@@ -1,7 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
-import { Handle, Position } from 'reactflow';
+import { useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import { Box } from '@mui/material';
 import NodeBox from './common/NodeBox';

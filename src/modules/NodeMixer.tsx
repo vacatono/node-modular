@@ -37,7 +37,7 @@ const NodeMixer = ({ data, id }: NodeMixerProps) => {
     };
   }, [data.volume, data.pan]);
 
-  const handleVolumeChange = useCallback((event: Event, value: number | number[]) => {
+  const handleVolumeChange = useCallback((value: number | number[]) => {
     if (mixer.current && typeof value === 'number') {
       mixer.current.volume.value = value;
     }

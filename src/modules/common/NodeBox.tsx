@@ -8,6 +8,10 @@ interface NodeBoxProps {
   hasInputHandle?: boolean;
   hasOutputHandle?: boolean;
   hasControlHandle?: boolean;
+  controlTargets?: {
+    label: string;
+    property: string;
+  }[];
 }
 
 const NodeBox = ({
@@ -17,6 +21,7 @@ const NodeBox = ({
   hasInputHandle = true,
   hasOutputHandle = true,
   hasControlHandle = false,
+  controlTargets = [],
 }: NodeBoxProps) => {
   return (
     <Box
@@ -30,17 +35,19 @@ const NodeBox = ({
     >
       {hasOutputHandle && <Handle type="source" position={Position.Right} id={`${id}-output`} />}
       {hasInputHandle && <Handle type="target" position={Position.Left} id={`${id}-input`} style={{ top: '50%' }} />}
-      {hasControlHandle && (
-        <Handle
-          type="target"
-          position={Position.Top}
-          id={`${id}-control`}
-          style={{
-            top: '25%',
-            background: '#ff9800', // コントロール用ハンドルをオレンジ色で区別
-          }}
-        />
-      )}
+      {hasControlHandle &&
+        controlTargets.map((target, index) => (
+          <Handle
+            key={`${id}-control-${target.property}`}
+            type="target"
+            position={Position.Top}
+            id={`${id}-control-${target.property}`}
+            style={{
+              top: `${25 + index * 20}%`,
+              background: '#ff9800',
+            }}
+          />
+        ))}
       <Typography variant="subtitle1">{label}</Typography>
       {children}
     </Box>

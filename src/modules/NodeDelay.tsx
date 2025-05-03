@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { Handle, Position } from 'reactflow';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import * as Tone from 'tone';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
@@ -34,13 +33,13 @@ const NodeDelay = ({ data, id }: NodeDelayProps) => {
     };
   }, [id, data.delayTime, data.feedback, data.registerAudioNode]);
 
-  const handleDelayTimeChange = useCallback((event: Event, value: number | number[]) => {
+  const handleDelayTimeChange = useCallback((value: number | number[]) => {
     if (delay.current && typeof value === 'number') {
       delay.current.delayTime.value = value;
     }
   }, []);
 
-  const handleFeedbackChange = useCallback((event: Event, value: number | number[]) => {
+  const handleFeedbackChange = useCallback((value: number | number[]) => {
     if (delay.current && typeof value === 'number') {
       delay.current.feedback.value = value;
     }

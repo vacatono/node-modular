@@ -6,7 +6,7 @@ interface CustomSliderProps {
   max: number;
   step: number;
   defaultValue: number;
-  onChange: (event: Event, value: number | number[]) => void;
+  onChange: (value: number | number[]) => void;
 }
 
 const CustomSlider = ({ label, min, max, step, defaultValue, onChange }: CustomSliderProps) => {
@@ -19,7 +19,7 @@ const CustomSlider = ({ label, min, max, step, defaultValue, onChange }: CustomS
         max={max}
         step={step}
         defaultValue={defaultValue}
-        onChange={onChange}
+        onChange={(_, value) => onChange(value)}
         valueLabelDisplay="auto"
       />
     </Box>

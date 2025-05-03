@@ -48,13 +48,13 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
     };
   }, [id, data.frequency, data.type, data.amplitude, data.registerAudioNode]);
 
-  const handleFrequencyChange = useCallback((event: Event, value: number | number[]) => {
+  const handleFrequencyChange = useCallback((value: number | number[]) => {
     if (lfo.current && typeof value === 'number') {
       lfo.current.frequency.value = value;
     }
   }, []);
 
-  const handleAmplitudeChange = useCallback((event: Event, value: number | number[]) => {
+  const handleAmplitudeChange = useCallback((value: number | number[]) => {
     if (lfo.current && typeof value === 'number') {
       lfo.current.amplitude.value = value;
     }

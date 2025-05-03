@@ -36,25 +36,25 @@ const NodeEnvelope = ({ data, id }: NodeEnvelopeProps) => {
     };
   }, [id, data.attack, data.decay, data.sustain, data.release, data.registerAudioNode]);
 
-  const handleAttackChange = useCallback((event: Event, value: number | number[]) => {
+  const handleAttackChange = useCallback((value: number | number[]) => {
     if (envelope.current && typeof value === 'number') {
       envelope.current.attack = value;
     }
   }, []);
 
-  const handleDecayChange = useCallback((event: Event, value: number | number[]) => {
+  const handleDecayChange = useCallback((value: number | number[]) => {
     if (envelope.current && typeof value === 'number') {
       envelope.current.decay = value;
     }
   }, []);
 
-  const handleSustainChange = useCallback((event: Event, value: number | number[]) => {
+  const handleSustainChange = useCallback((value: number | number[]) => {
     if (envelope.current && typeof value === 'number') {
       envelope.current.sustain = value;
     }
   }, []);
 
-  const handleReleaseChange = useCallback((event: Event, value: number | number[]) => {
+  const handleReleaseChange = useCallback((value: number | number[]) => {
     if (envelope.current && typeof value === 'number') {
       envelope.current.release = value;
     }

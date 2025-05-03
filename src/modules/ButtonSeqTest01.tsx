@@ -4,8 +4,6 @@ import { Button } from '@mui/material';
 
 const ButtonSeqTest01: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [synths, setSynths] = useState<Tone.MonoSynth[]>([]);
-  const [sequences, setSequences] = useState<Tone.Sequence[]>([]);
 
   useEffect(() => {
     // 基準音（A5）の周波数
@@ -43,22 +41,6 @@ const ButtonSeqTest01: React.FC = () => {
       baseFrequency * justRatios.perfectFourth * justRatios.octave, // C#6
     ];
 
-    // Dメジャーコード（D-F#-A）とその転回形
-    const frequencies3 = [
-      baseFrequency * justRatios.perfectFourth, // D5
-      baseFrequency * justRatios.majorSixth, // F#5
-      baseFrequency * justRatios.unison, // A5
-      baseFrequency * justRatios.majorSecond, // B5
-    ];
-
-    // C#マイナーコード（C#-E-G#）とその転回形
-    const frequencies4 = [
-      baseFrequency * justRatios.majorThird, // C#5
-      baseFrequency * justRatios.perfectFifth, // E5
-      baseFrequency * justRatios.majorSeventh, // G#5
-      baseFrequency * justRatios.unison, // A5
-    ];
-
     const createSynth = () => {
       return new Tone.MonoSynth({
         oscillator: { type: 'sine' },
@@ -82,17 +64,8 @@ const ButtonSeqTest01: React.FC = () => {
       ).start(startTime);
     };
 
-    const newSynths = [createSynth(), createSynth(), createSynth(), createSynth()];
-
-    const newSequences = [
-      createSequence(newSynths[0], frequencies1, 0),
-      createSequence(newSynths[1], frequencies2, 0),
-      //createSequence(newSynths[2], frequencies3, 0),
-      //createSequence(newSynths[3], frequencies4, 0),
-    ];
-
-    setSynths(newSynths);
-    setSequences(newSequences);
+    const newSynths = [createSynth(), createSynth()];
+    const newSequences = [createSequence(newSynths[0], frequencies1, 0), createSequence(newSynths[1], frequencies2, 0)];
 
     // クリーンアップ関数
     return () => {

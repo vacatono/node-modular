@@ -31,7 +31,7 @@ const NodeOutput = ({ data, id }: NodeOutputProps) => {
     };
   }, [id, data.volume, data.registerAudioNode]);
 
-  const handleVolumeChange = useCallback((event: Event, value: number | number[]) => {
+  const handleVolumeChange = useCallback((value: number | number[]) => {
     if (output.current && typeof value === 'number') {
       output.current.volume.value = value;
     }

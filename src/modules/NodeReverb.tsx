@@ -1,9 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { Handle, Position } from 'reactflow';
 import * as Tone from 'tone';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
 
@@ -41,19 +40,19 @@ const NodeReverb = ({ data, id }: NodeReverbProps) => {
     };
   }, [id, data.decay, data.preDelay, data.wet, data.registerAudioNode]);
 
-  const handleDecayChange = useCallback((event: Event, value: number | number[]) => {
+  const handleDecayChange = useCallback((value: number | number[]) => {
     if (reverb.current && typeof value === 'number') {
       reverb.current.decay = value;
     }
   }, []);
 
-  const handlePreDelayChange = useCallback((event: Event, value: number | number[]) => {
+  const handlePreDelayChange = useCallback((value: number | number[]) => {
     if (reverb.current && typeof value === 'number') {
       reverb.current.preDelay = value;
     }
   }, []);
 
-  const handleWetChange = useCallback((event: Event, value: number | number[]) => {
+  const handleWetChange = useCallback((value: number | number[]) => {
     if (reverb.current && typeof value === 'number') {
       reverb.current.wet.value = value;
     }

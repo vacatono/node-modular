@@ -119,16 +119,37 @@ const NodeEditor = () => {
     (params: Connection) => {
       const sourceNode = audioNodes.get(params.source);
       const targetNode = audioNodes.get(params.target);
+      const isControlConnection = params.targetHandle?.includes('-control');
 
       if (sourceNode && targetNode) {
         // 既存の接続を解除
         sourceNode.disconnect();
 
         // 新しい接続を作成
-        sourceNode.connect(targetNode);
+        if (isControlConnection) {
+          // control用Handleへの接続の場合、ノードのcontrolTargetsに基づいて接続
+          const property = params.targetHandle?.split('-').pop();
+          if (property && targetNode[property]) {
+            sourceNode.connect(targetNode[property]);
+          }
+        } else {
+          // 通常の接続
+          sourceNode.connect(targetNode);
+        }
       }
 
-      setEdges((eds) => addEdge(params, eds));
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            data: {
+              type: isControlConnection ? 'control' : 'audio',
+              targetProperty: isControlConnection ? params.targetHandle?.split('-').pop() : undefined,
+            },
+          },
+          eds
+        )
+      );
     },
     [setEdges]
   );

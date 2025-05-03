@@ -34,7 +34,7 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
     };
   }, [id, data.frequency, data.type, data.registerAudioNode]);
 
-  const handleFrequencyChange = useCallback((event: Event, value: number | number[]) => {
+  const handleFrequencyChange = useCallback((value: number | number[]) => {
     if (oscillator.current && typeof value === 'number') {
       oscillator.current.frequency.value = value;
     }
