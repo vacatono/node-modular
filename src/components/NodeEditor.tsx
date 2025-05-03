@@ -22,7 +22,6 @@ import NodeReverb from '../modules/NodeReverb';
 import NodeOutput from '../modules/NodeOutput';
 import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
-import CustomSlider from '@/modules/CustomSlider';
 
 // Tone.jsのオブジェクトを保持するためのマップ
 const audioNodes = new Map();
@@ -41,25 +40,25 @@ const initialNodes: Node[] = [
   {
     id: 'lfo1',
     type: 'lfo',
-    position: { x: 50, y: 100 },
+    position: { x: 50, y: 50 },
     data: { label: 'LFO', frequency: 1, type: 'sine', amplitude: 1, registerAudioNode: null },
   },
   {
     id: 'vco1',
     type: 'vco',
-    position: { x: 200, y: 100 },
+    position: { x: 400, y: 100 },
     data: { label: 'VCO', frequency: 440, type: 'sine', registerAudioNode: null },
   },
   {
     id: 'oscilloscope1',
     type: 'oscilloscope',
-    position: { x: 350, y: 100 },
+    position: { x: 50, y: 400 },
     data: { label: 'Oscilloscope', registerAudioNode: null },
   },
   {
     id: 'toDestination',
     type: 'toDestination',
-    position: { x: 500, y: 100 },
+    position: { x: 500, y: 400 },
     data: { label: 'Output', volume: -6, registerAudioNode: null },
     deletable: false,
   },
@@ -246,6 +245,7 @@ const NodeEditor = () => {
           onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
           fitView
+          fitViewOptions={{ padding: 0.2, maxZoom: 0.8 }}
           style={{ width: '100%', height: '100%' }}
           nodesDraggable={true}
           nodesConnectable={true}

@@ -47,7 +47,7 @@ const NodeOutput = ({ data, id }: NodeOutputProps) => {
         minWidth: 200,
       }}
     >
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Left} id={`${id}-input`} style={{ top: '50%' }} />
       <Typography variant="subtitle1">{data.label}</Typography>
       <Box sx={{ mt: 2 }}>
         <CustomSlider

@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
-import { Box, Typography, Slider } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import * as Tone from 'tone';
+import CustomSlider from './common/CustomSlider';
+import NodeBox from './common/NodeBox';
 
 interface NodeMixerProps {
   data: {
@@ -11,9 +13,10 @@ interface NodeMixerProps {
     volume?: number;
     pan?: number;
   };
+  id: string;
 }
 
-const NodeMixer = ({ data }: NodeMixerProps) => {
+const NodeMixer = ({ data, id }: NodeMixerProps) => {
   const mixer = useRef<Tone.Volume | null>(null);
   const panner = useRef<Tone.Panner | null>(null);
 
@@ -47,27 +50,18 @@ const NodeMixer = ({ data }: NodeMixerProps) => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
-        minWidth: 200,
-      }}
-    >
-      <Handle type="target" position={Position.Left} />
-      <Typography variant="subtitle1">{data.label}</Typography>
+    <NodeBox id={id} label={data.label}>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Volume</Typography>
-        <Slider min={-60} max={0} step={0.1} defaultValue={data.volume || 0} onChange={handleVolumeChange} />
+        <CustomSlider
+          label="Volume"
+          min={0}
+          max={1}
+          step={0.01}
+          defaultValue={data.volume || 0.5}
+          onChange={handleVolumeChange}
+        />
       </Box>
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Pan</Typography>
-        <Slider min={-1} max={1} step={0.01} defaultValue={data.pan || 0} onChange={handlePanChange} />
-      </Box>
-      <Handle type="source" position={Position.Right} />
-    </Box>
+    </NodeBox>
   );
 };
 

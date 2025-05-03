@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
 import * as Tone from 'tone';
 import { Box } from '@mui/material';
+import NodeBox from './common/NodeBox';
 
 interface NodeOscilloscopeProps {
   data: {
@@ -73,11 +74,11 @@ const NodeOscilloscope = ({ data, id }: NodeOscilloscopeProps) => {
   }, [id, data.size, data.registerAudioNode]);
 
   return (
-    <Box sx={{ padding: 2, background: 'white', borderRadius: 1 }}>
-      <Handle type="target" position={Position.Left} />
-      <canvas ref={canvasRef} width={200} height={100} style={{ background: '#f5f5f5' }} />
-      <Handle type="source" position={Position.Right} />
-    </Box>
+    <NodeBox id={id} label={data.label}>
+      <Box sx={{ mt: 2 }}>
+        <canvas ref={canvasRef} width={200} height={100} style={{ border: '1px solid #ccc' }} />
+      </Box>
+    </NodeBox>
   );
 };
 

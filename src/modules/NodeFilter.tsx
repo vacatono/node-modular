@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
 import * as Tone from 'tone';
 import { Box, Typography, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
-import CustomSlider from './CustomSlider';
+import CustomSlider from './common/CustomSlider';
+import NodeBox from './common/NodeBox';
 
 interface NodeFilterProps {
   data: {
@@ -54,21 +55,11 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
-        minWidth: 200,
-      }}
-    >
-      <Handle type="target" position={Position.Left} />
-      <Typography variant="subtitle1">{data.label}</Typography>
+    <NodeBox id={id} label={data.label}>
       <Box sx={{ mt: 2 }}>
-        <FormControl fullWidth size="small">
+        <FormControl fullWidth>
           <InputLabel>Type</InputLabel>
-          <Select defaultValue={data.type || 'lowpass'} onChange={handleTypeChange}>
+          <Select value={data.type || 'lowpass'} onChange={handleTypeChange} label="Type">
             <MenuItem value="lowpass">Lowpass</MenuItem>
             <MenuItem value="highpass">Highpass</MenuItem>
             <MenuItem value="bandpass">Bandpass</MenuItem>
@@ -87,17 +78,9 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
         />
       </Box>
       <Box sx={{ mt: 2 }}>
-        <CustomSlider
-          label="Resonance (Q)"
-          min={0.1}
-          max={10}
-          step={0.1}
-          defaultValue={data.Q || 1}
-          onChange={handleQChange}
-        />
+        <CustomSlider label="Q" min={0.1} max={10} step={0.1} defaultValue={data.Q || 1} onChange={handleQChange} />
       </Box>
-      <Handle type="source" position={Position.Right} />
-    </Box>
+    </NodeBox>
   );
 };
 

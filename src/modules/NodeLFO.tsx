@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Box, Typography, Slider, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import * as Tone from 'tone';
+import CustomSlider from './common/CustomSlider';
+import NodeBox from './common/NodeBox';
 
 interface NodeLFOProps {
   data: {
@@ -65,24 +67,26 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
-        minWidth: 200,
-      }}
-    >
-      <Handle type="target" position={Position.Left} />
-      <Typography variant="subtitle1">{data.label}</Typography>
+    <NodeBox id={id} label={data.label}>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Frequency</Typography>
-        <Slider min={0.1} max={20} step={0.1} defaultValue={data.frequency || 1} onChange={handleFrequencyChange} />
+        <CustomSlider
+          label="Frequency"
+          min={0.1}
+          max={20}
+          step={0.1}
+          defaultValue={data.frequency || 1}
+          onChange={handleFrequencyChange}
+        />
       </Box>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Amplitude</Typography>
-        <Slider min={0} max={1} step={0.01} defaultValue={data.amplitude || 1} onChange={handleAmplitudeChange} />
+        <CustomSlider
+          label="Amplitude"
+          min={0}
+          max={1}
+          step={0.01}
+          defaultValue={data.amplitude || 0.5}
+          onChange={handleAmplitudeChange}
+        />
       </Box>
       <Box sx={{ mt: 2 }}>
         <FormControl fullWidth size="small">
@@ -95,8 +99,8 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
           </Select>
         </FormControl>
       </Box>
-      <Handle type="source" position={Position.Right} id="output" />
-    </Box>
+      <Handle type="source" position={Position.Right} id={`${id}-output`} />
+    </NodeBox>
   );
 };
 

@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { Handle, Position } from 'reactflow';
-import { Box, Typography, Slider } from '@mui/material';
 import * as Tone from 'tone';
+import { Box } from '@mui/material';
+import CustomSlider from './common/CustomSlider';
+import NodeBox from './common/NodeBox';
 
 interface NodeEnvelopeProps {
   data: {
@@ -12,24 +13,28 @@ interface NodeEnvelopeProps {
     decay?: number;
     sustain?: number;
     release?: number;
+    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
   };
+  id: string;
 }
 
-const NodeEnvelope = ({ data }: NodeEnvelopeProps) => {
-  const envelope = useRef<Tone.Envelope | null>(null);
+const NodeEnvelope = ({ data, id }: NodeEnvelopeProps) => {
+  const envelope = useRef<Tone.AmplitudeEnvelope | null>(null);
 
   useEffect(() => {
-    envelope.current = new Tone.Envelope({
+    envelope.current = new Tone.AmplitudeEnvelope({
       attack: data.attack || 0.1,
       decay: data.decay || 0.2,
       sustain: data.sustain || 0.5,
-      release: data.release || 0.8,
+      release: data.release || 0.3,
     });
+
+    data.registerAudioNode(id, envelope.current);
 
     return () => {
       envelope.current?.dispose();
     };
-  }, [data.attack, data.decay, data.sustain, data.release]);
+  }, [id, data.attack, data.decay, data.sustain, data.release, data.registerAudioNode]);
 
   const handleAttackChange = useCallback((event: Event, value: number | number[]) => {
     if (envelope.current && typeof value === 'number') {
@@ -56,35 +61,48 @@ const NodeEnvelope = ({ data }: NodeEnvelopeProps) => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
-        minWidth: 200,
-      }}
-    >
-      <Handle type="target" position={Position.Left} />
-      <Typography variant="subtitle1">{data.label}</Typography>
+    <NodeBox id={id} label={data.label}>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Attack</Typography>
-        <Slider min={0.001} max={2} step={0.001} defaultValue={data.attack || 0.1} onChange={handleAttackChange} />
+        <CustomSlider
+          label="Attack"
+          min={0}
+          max={1}
+          step={0.01}
+          defaultValue={data.attack || 0.1}
+          onChange={handleAttackChange}
+        />
       </Box>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Decay</Typography>
-        <Slider min={0.001} max={2} step={0.001} defaultValue={data.decay || 0.2} onChange={handleDecayChange} />
+        <CustomSlider
+          label="Decay"
+          min={0}
+          max={1}
+          step={0.01}
+          defaultValue={data.decay || 0.2}
+          onChange={handleDecayChange}
+        />
       </Box>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Sustain</Typography>
-        <Slider min={0} max={1} step={0.01} defaultValue={data.sustain || 0.5} onChange={handleSustainChange} />
+        <CustomSlider
+          label="Sustain"
+          min={0}
+          max={1}
+          step={0.01}
+          defaultValue={data.sustain || 0.5}
+          onChange={handleSustainChange}
+        />
       </Box>
       <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Release</Typography>
-        <Slider min={0.001} max={2} step={0.001} defaultValue={data.release || 0.8} onChange={handleReleaseChange} />
+        <CustomSlider
+          label="Release"
+          min={0}
+          max={1}
+          step={0.01}
+          defaultValue={data.release || 0.3}
+          onChange={handleReleaseChange}
+        />
       </Box>
-      <Handle type="source" position={Position.Right} />
-    </Box>
+    </NodeBox>
   );
 };
 

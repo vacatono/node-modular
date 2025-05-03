@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Handle, Position } from 'reactflow';
 import * as Tone from 'tone';
 import { Box, Typography, Select, MenuItem, FormControl, InputLabel, Button, SelectChangeEvent } from '@mui/material';
-import CustomSlider from './CustomSlider';
+import CustomSlider from './common/CustomSlider';
 
 interface NodeVCOProps {
   data: {
@@ -12,6 +12,7 @@ interface NodeVCOProps {
     frequency?: number;
     type?: Tone.ToneOscillatorType;
     registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
+    getAudioNode: (nodeId: string) => Tone.ToneAudioNode | undefined;
   };
   id: string;
 }
@@ -19,6 +20,7 @@ interface NodeVCOProps {
 const NodeVCO = ({ data, id }: NodeVCOProps) => {
   const oscillator = useRef<Tone.Oscillator | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const inputNode = useRef<Tone.ToneAudioNode | null>(null);
 
   useEffect(() => {
     oscillator.current = new Tone.Oscillator(data.frequency || 440, data.type || 'sine');
@@ -65,7 +67,22 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
         minWidth: 200,
       }}
     >
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Right} id={`${id}-output`} />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id={`${id}-frequency-input`}
+        style={{ top: '50%' }}
+        onConnect={(params) => {
+          const sourceNode = data.getAudioNode(params.source ?? '');
+          if (sourceNode) {
+            inputNode.current = sourceNode;
+            // 入力信号を監視
+            sourceNode.connect(Tone.Destination);
+            console.log('Input signal connected:', sourceNode);
+          }
+        }}
+      />
       <Typography variant="subtitle1">{data.label}</Typography>
       <Box sx={{ mt: 2 }}>
         <FormControl fullWidth size="small">

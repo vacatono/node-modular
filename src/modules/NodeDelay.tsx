@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Box, Typography } from '@mui/material';
 import * as Tone from 'tone';
-import CustomSlider from './CustomSlider';
+import CustomSlider from './common/CustomSlider';
+import NodeBox from './common/NodeBox';
 
 interface NodeDelayProps {
   data: {
@@ -46,17 +47,7 @@ const NodeDelay = ({ data, id }: NodeDelayProps) => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
-        minWidth: 200,
-      }}
-    >
-      <Handle type="target" position={Position.Left} />
-      <Typography variant="subtitle1">{data.label}</Typography>
+    <NodeBox id={id} label={data.label}>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
           label="Delay Time"
@@ -77,8 +68,7 @@ const NodeDelay = ({ data, id }: NodeDelayProps) => {
           onChange={handleFeedbackChange}
         />
       </Box>
-      <Handle type="source" position={Position.Right} />
-    </Box>
+    </NodeBox>
   );
 };
 
