@@ -8,6 +8,6 @@
     "linebreak-style": ["error", "unix"],
     "no-undef": "off",
     "react-hooks/exhaustive-deps": "warn",
-    "no-unused-vars": "warn"
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
   }
 }

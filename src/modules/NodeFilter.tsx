@@ -50,7 +50,7 @@ interface NodeFilterProps {
     /** レゾナンス（Q値）（デフォルト: 1） */
     Q?: number;
     /** オーディオノードの登録関数 */
-    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
   };
 }
 

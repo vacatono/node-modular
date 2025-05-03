@@ -12,7 +12,7 @@ interface NodeReverbProps {
     decay?: number;
     preDelay?: number;
     wet?: number;
-    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
   };
   id: string;
 }

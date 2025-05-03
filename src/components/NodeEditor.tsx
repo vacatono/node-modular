@@ -128,6 +128,7 @@ const NodeEditor = () => {
         // 新しい接続を作成
         if (isControlConnection) {
           // control用Handleへの接続の場合、ノードのcontrolTargetsに基づいて接続
+          // 例：NodeFilterの場合は、LFOからの信号がmodulationSignalに接続される
           const property = params.targetHandle?.split('-').pop();
           if (property && targetNode[property]) {
             sourceNode.connect(targetNode[property]);
@@ -248,6 +249,15 @@ const NodeEditor = () => {
           </Button>
           <Button variant="contained" onClick={() => addNode('oscilloscope')}>
             Add Oscilloscope
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={() => {
+              console.log('AudioNodes:', audioNodes);
+            }}
+          >
+            Debug Nodes
           </Button>
         </Stack>
       </Box>
