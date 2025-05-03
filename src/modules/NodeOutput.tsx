@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Box, Typography } from '@mui/material';
 import * as Tone from 'tone';
-import CustomSlider from './CustomSlider';
+import CustomSlider from './common/CustomSlider';
 
 interface NodeOutputProps {
   data: {
