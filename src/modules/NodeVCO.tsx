@@ -40,8 +40,6 @@ interface NodeVCOProps {
     type?: Tone.ToneOscillatorType;
     /** オーディオノードの登録関数 */
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
-    /** オーディオノードの取得関数 */
-    getAudioNode: (_nodeId: string) => Tone.ToneAudioNode | undefined;
   };
 }
 
@@ -78,11 +76,13 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
     }
   }, []);
 
-  const handlePlayToggle = useCallback(() => {
+  const handlePlayToggle = useCallback(async () => {
     if (oscillator.current) {
       if (isPlaying) {
         oscillator.current.stop();
       } else {
+        // Tone.jsのコンテキストを開始
+        //await Tone.start();
         oscillator.current.start();
       }
       setIsPlaying(!isPlaying);
