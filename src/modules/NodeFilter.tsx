@@ -62,26 +62,18 @@ interface NodeFilterProps {
  */
 const NodeFilter = ({ data, id }: NodeFilterProps) => {
   const filter = useRef<Tone.Filter | null>(null);
-  const baseFrequency = useRef<number>(data.frequency || 1000);
-  const modulationSignal = useRef<Tone.Signal | null>(null);
 
   // フィルターの初期化と設定
   useEffect(() => {
     filter.current = new Tone.Filter({
-      frequency: baseFrequency.current,
+      frequency: data.frequency || 1000,
       type: data.type || 'lowpass',
       Q: data.Q || 1,
     });
 
-    // 変調用のSignalを作成
-    modulationSignal.current = new Tone.Signal(0);
-    // 変調信号を周波数に加算
-    modulationSignal.current.connect(filter.current.frequency);
-
     data.registerAudioNode(id, filter.current);
 
     return () => {
-      modulationSignal.current?.dispose();
       filter.current?.dispose();
     };
   }, [id, data.type, data.Q, data.registerAudioNode]);
@@ -96,7 +88,6 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
   // 周波数変更ハンドラ
   const handleFrequencyChange = useCallback((value: number | number[]) => {
     if (filter.current && typeof value === 'number') {
-      baseFrequency.current = value;
       filter.current.frequency.value = value;
     }
   }, []);
@@ -105,17 +96,6 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
   const handleQChange = useCallback((value: number | number[]) => {
     if (filter.current && typeof value === 'number') {
       filter.current.Q.value = value;
-    }
-  }, []);
-
-  // control入力の処理
-  useEffect(() => {
-    if (modulationSignal.current) {
-      // control入力の値を-1から1の範囲で受け取り、周波数を変調
-      const modulationAmount = 0; // 初期値は0
-      if (modulationSignal.current) {
-        modulationSignal.current.value = modulationAmount;
-      }
     }
   }, []);
 
@@ -141,14 +121,21 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
         <CustomSlider
           label="Frequency"
           min={20}
-          max={20000}
+          max={2000}
           step={1}
-          defaultValue={baseFrequency.current}
+          defaultValue={data.frequency || 1000}
           onChange={handleFrequencyChange}
         />
       </Box>
       <Box sx={{ mt: 2 }}>
-        <CustomSlider label="Q" min={0.1} max={10} step={0.1} defaultValue={data.Q || 1} onChange={handleQChange} />
+        <CustomSlider
+          label="Resonance"
+          min={0}
+          max={20}
+          step={0.1}
+          defaultValue={data.Q || 1}
+          onChange={handleQChange}
+        />
       </Box>
     </NodeBox>
   );

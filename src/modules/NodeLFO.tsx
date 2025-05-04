@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { Handle, Position } from 'reactflow';
-import { Box, Typography, Slider, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+
+import { Box, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import * as Tone from 'tone';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
@@ -13,7 +13,7 @@ interface NodeLFOProps {
     frequency?: number;
     type?: Tone.ToneOscillatorType;
     amplitude?: number;
-    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
   };
   id: string;
 }
@@ -27,6 +27,8 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
       frequency: data.frequency || 1,
       type: data.type || 'sine',
       amplitude: data.amplitude || 1,
+      //min: 0,
+      // max: 880,
     });
 
     // 出力用のSignalを作成
@@ -99,7 +101,6 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
           </Select>
         </FormControl>
       </Box>
-      <Handle type="source" position={Position.Right} id={`${id}-output`} />
     </NodeBox>
   );
 };

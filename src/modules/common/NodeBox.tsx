@@ -34,21 +34,24 @@ const NodeBox = ({
     <Box
       sx={{
         padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
+
         minWidth: 200,
       }}
     >
       {hasOutputHandle && (
-        <Handle type="source" position={Position.Right} id={`${id}-output`} style={{ width: 12, height: 12 }} />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`${id}-output`}
+          style={{ width: 20, height: 20, background: 'red', borderStyle: 'none', right: -10 }}
+        />
       )}
       {hasInputHandle && (
         <Handle
           type="target"
           position={Position.Left}
           id={`${id}-input`}
-          style={{ top: '50%', width: 12, height: 12 }}
+          style={{ width: 20, height: 20, background: 'blue', borderStyle: 'none', left: -10 }}
         />
       )}
       {hasControl1Handle && control1Target && (
@@ -58,10 +61,10 @@ const NodeBox = ({
           position={Position.Top}
           id={`${id}-control1-${control1Target.property}`}
           style={{
-            top: '25%',
-            background: '#4caf50',
-            width: 12,
-            height: 12,
+            background: 'lightgreen',
+            width: 20,
+            height: 20,
+            top: -10,
           }}
         />
       )}
@@ -72,10 +75,11 @@ const NodeBox = ({
           position={Position.Bottom}
           id={`${id}-control2-${control2Target.property}`}
           style={{
-            bottom: '25%',
-            background: '#2196f3',
-            width: 12,
-            height: 12,
+            background: 'lightblue',
+            borderStyle: 'none',
+            width: 20,
+            height: 20,
+            bottom: -10,
           }}
         />
       )}

@@ -9,7 +9,7 @@ interface NodeOscilloscopeProps {
   data: {
     label: string;
     size?: number;
-    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
   };
   id: string;
 }

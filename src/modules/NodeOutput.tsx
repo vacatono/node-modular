@@ -1,16 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { Handle, Position } from 'reactflow';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import * as Tone from 'tone';
 import CustomSlider from './common/CustomSlider';
+import NodeBox from './common/NodeBox';
 
 interface NodeOutputProps {
   data: {
     label: string;
     volume?: number;
-    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
   };
   id: string;
 }
@@ -38,17 +38,7 @@ const NodeOutput = ({ data, id }: NodeOutputProps) => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
-        minWidth: 200,
-      }}
-    >
-      <Handle type="target" position={Position.Left} id={`${id}-input`} style={{ top: '50%' }} />
-      <Typography variant="subtitle1">{data.label}</Typography>
+    <NodeBox id={id} label={data.label} hasOutputHandle={false}>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
           label="Volume"
@@ -59,7 +49,7 @@ const NodeOutput = ({ data, id }: NodeOutputProps) => {
           onChange={handleVolumeChange}
         />
       </Box>
-    </Box>
+    </NodeBox>
   );
 };
 
