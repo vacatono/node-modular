@@ -279,7 +279,6 @@ const NodeEditor = () => {
           onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.2, maxZoom: 0.8 }}
           style={{ width: '100%', height: '100%' }}
           nodesDraggable={true}
           nodesConnectable={true}
