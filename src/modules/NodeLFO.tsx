@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { Handle, Position } from 'reactflow';
+
 import { Box, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import * as Tone from 'tone';
 import CustomSlider from './common/CustomSlider';
@@ -27,8 +27,8 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
       frequency: data.frequency || 1,
       type: data.type || 'sine',
       amplitude: data.amplitude || 1,
-      min: 0,
-      max: 880,
+      //min: 0,
+      // max: 880,
     });
 
     // 出力用のSignalを作成
