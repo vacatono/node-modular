@@ -83,22 +83,48 @@ const NodeEditor = () => {
       if (existingNode) {
         existingNode.disconnect();
       }
+      console.log('registerAudioNode', nodeId, audioNode);
+      //console.log('edges', edges);
 
       audioNodes.set(nodeId, audioNode);
 
       // このノードに接続している既存のエッジを探して再接続
       edges.forEach((edge) => {
-        if (edge.target === nodeId) {
-          const sourceNode = audioNodes.get(edge.source);
-          if (sourceNode) {
-            sourceNode.connect(audioNode);
+        try {
+          // target/controlからsource(出力)に接続するパターン
+          if (edge.target === nodeId) {
+            const sourceNode = audioNodes.get(edge.source);
+            if (sourceNode) {
+              if (edge.targetHandle?.includes('-control')) {
+                console.log('edge', edge);
+                console.log('sourceNode', sourceNode);
+                console.log('audioNode', audioNode);
+
+                const property = edge.targetHandle?.split('-').pop();
+                if (property && property in audioNode) {
+                  sourceNode.connect(audioNode[property as keyof typeof audioNode]);
+                }
+              } else {
+                sourceNode.connect(audioNode);
+              }
+            }
           }
-        }
-        if (edge.source === nodeId) {
-          const targetNode = audioNodes.get(edge.target);
-          if (targetNode) {
-            audioNode.connect(targetNode);
+          // sourceからtarget/controlに接続するパターン
+          if (edge.source === nodeId) {
+            const targetNode = audioNodes.get(edge.target);
+            if (targetNode) {
+              if (edge.sourceHandle?.includes('-control')) {
+                const property = edge.sourceHandle?.split('-').pop();
+                if (property && property in audioNode) {
+                  audioNode.connect(targetNode[property as keyof typeof targetNode]);
+                }
+              } else {
+                audioNode.connect(targetNode);
+              }
+            }
           }
+        } catch (error) {
+          console.error('Error connecting audio nodes:', error);
         }
       });
 
@@ -120,10 +146,11 @@ const NodeEditor = () => {
       // onConnectのログ
       console.log('onConnect', params);
 
-      const sourceNode = audioNodes.get(params.source);
-      const targetNode = audioNodes.get(params.target);
+      //const sourceNode = audioNodes.get(params.source);
+      //const targetNode = audioNodes.get(params.target);
       const isControlConnection = params.targetHandle?.includes('-control');
 
+      /*
       if (sourceNode && targetNode) {
         // 既存の接続を解除
         sourceNode.disconnect();
@@ -141,6 +168,7 @@ const NodeEditor = () => {
           sourceNode.connect(targetNode);
         }
       }
+      */
 
       setEdges((eds) =>
         addEdge(
@@ -159,27 +187,14 @@ const NodeEditor = () => {
   );
 
   // エッジが削除されたときの処理
-  const onEdgesDelete = useCallback(
-    (edgesToDelete: Edge[]) => {
-      edgesToDelete.forEach((edge) => {
-        const sourceNode = audioNodes.get(edge.source);
-        if (sourceNode) {
-          sourceNode.disconnect();
-
-          // 残っているエッジを再接続
-          edges.forEach((remainingEdge) => {
-            if (remainingEdge.source === edge.source && remainingEdge !== edge) {
-              const targetNode = audioNodes.get(remainingEdge.target);
-              if (targetNode) {
-                sourceNode.connect(targetNode);
-              }
-            }
-          });
-        }
-      });
-    },
-    [edges]
-  );
+  const onEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
+    edgesToDelete.forEach((edge) => {
+      const sourceNode = audioNodes.get(edge.source);
+      if (sourceNode) {
+        sourceNode.disconnect();
+      }
+    });
+  }, []);
 
   // ノードが削除されたときの処理
   const onNodesDelete = useCallback((nodesToDelete: Node[]) => {
@@ -193,6 +208,7 @@ const NodeEditor = () => {
     });
   }, []);
 
+  // ノードを追加する関数
   const addNode = useCallback(
     (type: string) => {
       const newNode: Node = {
@@ -228,7 +244,7 @@ const NodeEditor = () => {
     border: selectedNodeId === node.id ? '2px solid #1976d2' : '1px solid #ccc',
     background: selectedNodeId === node.id ? '#e3f2fd' : 'white',
     borderRadius: 8,
-    boxShadow: selectedNodeId === node.id ? '0 0 0 2px #90caf9' : 'none',
+    boxShadow: selectedNodeId === node.id ? '0 0 0 3px #b0daf9' : 'none',
   });
 
   return (
