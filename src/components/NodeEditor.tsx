@@ -117,6 +117,9 @@ const NodeEditor = () => {
   // エッジが追加されたときの処理
   const onConnect = useCallback(
     (params: Connection) => {
+      // onConnectのログ
+      console.log('onConnect', params);
+
       const sourceNode = audioNodes.get(params.source);
       const targetNode = audioNodes.get(params.target);
       const isControlConnection = params.targetHandle?.includes('-control');
