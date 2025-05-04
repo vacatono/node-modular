@@ -45,7 +45,7 @@ const NodeBox = ({
           type="source"
           position={Position.Right}
           id={`${id}-output`}
-          style={{ width: 12, height: 12, background: 'red' }}
+          style={{ width: 20, height: 20, background: 'red', borderStyle: 'none', right: -10 }}
         />
       )}
       {hasInputHandle && (
@@ -53,7 +53,7 @@ const NodeBox = ({
           type="target"
           position={Position.Left}
           id={`${id}-input`}
-          style={{ width: 12, height: 12, background: 'blue' }}
+          style={{ width: 20, height: 20, background: 'blue', borderStyle: 'none', left: -10 }}
         />
       )}
       {hasControl1Handle && control1Target && (
@@ -64,8 +64,9 @@ const NodeBox = ({
           id={`${id}-control1-${control1Target.property}`}
           style={{
             background: 'lightgreen',
-            width: 12,
-            height: 12,
+            width: 20,
+            height: 20,
+            top: -10,
           }}
         />
       )}
@@ -77,8 +78,10 @@ const NodeBox = ({
           id={`${id}-control2-${control2Target.property}`}
           style={{
             background: 'lightblue',
-            width: 12,
-            height: 12,
+            borderStyle: 'none',
+            width: 20,
+            height: 20,
+            bottom: -10,
           }}
         />
       )}
