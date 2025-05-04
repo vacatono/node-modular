@@ -123,8 +123,8 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
     <NodeBox
       id={id}
       label={data.label}
-      hasControlHandle={true}
-      controlTargets={[{ label: 'Cutoff', property: 'frequency' }]}
+      hasControl1Handle={true}
+      control1Target={{ label: 'Cutoff', property: 'frequency' }}
     >
       <Box sx={{ mt: 2 }}>
         <FormControl fullWidth>
