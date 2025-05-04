@@ -117,20 +117,15 @@ const NodeEditor = () => {
       // このノードに接続している既存のエッジを探して再接続
       edges.forEach((edge) => {
         try {
-          // target/controlからsource(出力)に接続するパターン
-
           if (edge.target === nodeId) {
             const sourceNode = audioNodes.get(edge.source);
 
+            console.log('nodeId', nodeId);
+            // targetからsource
             if (sourceNode) {
               if (edge.targetHandle?.includes('-control')) {
                 const nodeType = audioNode.name;
                 const property = edge.targetHandle?.split('-').pop();
-
-                console.log('edge', edge);
-                console.log('sourceNode', sourceNode);
-                console.log('audioNode', audioNode);
-                console.log('AudioNodeType', nodeType);
 
                 if (property && property in audioNode) {
                   // NodeTypeとpropertyからcontrolScalesからスケール情報を取得
@@ -145,7 +140,6 @@ const NodeEditor = () => {
                     } else {
                       sourceNode.connect(audioNode);
                     }
-                    //scaleNode.connect(audioNode[property as keyof typeof audioNode]);
                   } else {
                     sourceNode.connect(audioNode[property as keyof typeof audioNode]);
                   }
@@ -156,24 +150,31 @@ const NodeEditor = () => {
             }
           }
 
-          // sourceからtarget/controlに接続するパターン
-          /*
+          // sourceからtarget
           if (edge.source === nodeId) {
             const targetNode = audioNodes.get(edge.target);
             if (targetNode) {
-              const nodeType = targetNode.name;
-              console.log('TargetNodeType', nodeType);
+              // controlパターン
               if (edge.sourceHandle?.includes('-control')) {
+                const nodeType = targetNode.name;
                 const property = edge.sourceHandle?.split('-').pop();
-                if (property && property in audioNode) {
-                  audioNode.connect(targetNode[property as keyof typeof targetNode]);
+                if (property && property in targetNode) {
+                  // NodeTypeとpropertyからcontrolScalesからスケール情報を取得
+                  const scaleInfo = controlScales[nodeType]?.[property];
+                  if (scaleInfo) {
+                    // スケールノードを作成
+                    const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
+                    audioNode.connect(scaleNode);
+                    scaleNode.connect(targetNode[property as keyof typeof targetNode]);
+                  } else {
+                    audioNode.connect(targetNode[property as keyof typeof targetNode]);
+                  }
                 }
               } else {
                 audioNode.connect(targetNode);
               }
             }
           }
-          */
         } catch (error) {
           console.error('Error connecting audio nodes:', error);
         }
@@ -187,10 +188,11 @@ const NodeEditor = () => {
     [edges]
   );
 
+  /*
   const getAudioNode = useCallback((nodeId: string) => {
     return audioNodes.get(nodeId);
   }, []);
-
+  */
   // エッジが追加されたときの処理
   const onConnect = useCallback(
     (params: Connection) => {
@@ -325,19 +327,19 @@ const NodeEditor = () => {
             color="warning"
             onClick={() => {
               console.log('AudioNodes:', audioNodes);
+              console.log('Edges:', edges);
             }}
           >
-            Debug Nodes
+            Debug Nodes/Edges
           </Button>
         </Stack>
-        <ButtonTestVCOModulation />
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <ReactFlow
           nodes={nodes.map((node) => ({
             ...node,
             style: getNodeStyle(node),
-            data: { ...node.data, registerAudioNode, getAudioNode },
+            data: { ...node.data, registerAudioNode },
           }))}
           edges={edges}
           onNodesChange={onNodesChange}
