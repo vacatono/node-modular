@@ -109,7 +109,7 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
       <Box sx={{ mt: 2 }}>
         <FormControl fullWidth>
           <InputLabel>Type</InputLabel>
-          <Select value={data.type || 'lowpass'} onChange={handleTypeChange} label="Type">
+          <Select defaultValue={data.type || 'lowpass'} onChange={handleTypeChange}>
             <MenuItem value="lowpass">Lowpass</MenuItem>
             <MenuItem value="highpass">Highpass</MenuItem>
             <MenuItem value="bandpass">Bandpass</MenuItem>
