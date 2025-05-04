@@ -27,6 +27,7 @@ import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 // Tone.jsのオブジェクトを保持するためのマップ
 const audioNodes = new Map();
 
+// ノードの種類を定義
 const nodeTypes: NodeTypes = {
   vco: NodeVCO,
   filter: NodeFilter,
@@ -37,6 +38,30 @@ const nodeTypes: NodeTypes = {
   oscilloscope: NodeOscilloscope,
 };
 
+// controlに送信される信号(0-1)のスケール情報
+const controlScales: Record<string, Record<string, { min: number; max: number }>> = {
+  Oscillator: {
+    frequency: { min: 20, max: 2000 },
+    detune: { min: -100, max: 100 },
+  },
+  Filter: {
+    frequency: { min: 200, max: 5000 },
+    Q: { min: 0.1, max: 20 },
+  },
+  Gain: {
+    gain: { min: 0, max: 1 },
+  },
+  panner: {
+    pan: { min: -1, max: 1 },
+  },
+  Delay: {
+    delayTime: { min: 0, max: 1 },
+    feedback: { min: 0, max: 1 },
+    mix: { min: 0, max: 1 },
+  },
+};
+
+// 初期ノードを定義
 const initialNodes: Node[] = [
   {
     id: 'lfo1',
@@ -84,7 +109,7 @@ const NodeEditor = () => {
       if (existingNode) {
         existingNode.disconnect();
       }
-      console.log('registerAudioNode', nodeId, audioNode);
+      //console.log('registerAudioNode', nodeId, audioNode);
       //console.log('edges', edges);
 
       audioNodes.set(nodeId, audioNode);
@@ -93,27 +118,51 @@ const NodeEditor = () => {
       edges.forEach((edge) => {
         try {
           // target/controlからsource(出力)に接続するパターン
+
           if (edge.target === nodeId) {
             const sourceNode = audioNodes.get(edge.source);
+
             if (sourceNode) {
               if (edge.targetHandle?.includes('-control')) {
+                const nodeType = audioNode.name;
+                const property = edge.targetHandle?.split('-').pop();
+
                 console.log('edge', edge);
                 console.log('sourceNode', sourceNode);
                 console.log('audioNode', audioNode);
+                console.log('AudioNodeType', nodeType);
 
-                const property = edge.targetHandle?.split('-').pop();
                 if (property && property in audioNode) {
-                  sourceNode.connect(audioNode[property as keyof typeof audioNode]);
+                  // NodeTypeとpropertyからcontrolScalesからスケール情報を取得
+                  const scaleInfo = controlScales[nodeType]?.[property];
+                  if (scaleInfo) {
+                    console.log('scaleInfo', scaleInfo);
+                    const targetParam = audioNode[property as keyof typeof audioNode];
+                    const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
+                    sourceNode.connect(scaleNode);
+                    if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
+                      scaleNode.connect(targetParam as Tone.InputNode);
+                    } else {
+                      sourceNode.connect(audioNode);
+                    }
+                    //scaleNode.connect(audioNode[property as keyof typeof audioNode]);
+                  } else {
+                    sourceNode.connect(audioNode[property as keyof typeof audioNode]);
+                  }
                 }
               } else {
                 sourceNode.connect(audioNode);
               }
             }
           }
+
           // sourceからtarget/controlに接続するパターン
+          /*
           if (edge.source === nodeId) {
             const targetNode = audioNodes.get(edge.target);
             if (targetNode) {
+              const nodeType = targetNode.name;
+              console.log('TargetNodeType', nodeType);
               if (edge.sourceHandle?.includes('-control')) {
                 const property = edge.sourceHandle?.split('-').pop();
                 if (property && property in audioNode) {
@@ -124,6 +173,7 @@ const NodeEditor = () => {
               }
             }
           }
+          */
         } catch (error) {
           console.error('Error connecting audio nodes:', error);
         }
