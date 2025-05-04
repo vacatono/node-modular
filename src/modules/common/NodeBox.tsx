@@ -41,14 +41,19 @@ const NodeBox = ({
       }}
     >
       {hasOutputHandle && (
-        <Handle type="source" position={Position.Right} id={`${id}-output`} style={{ width: 12, height: 12 }} />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`${id}-output`}
+          style={{ width: 12, height: 12, background: 'red' }}
+        />
       )}
       {hasInputHandle && (
         <Handle
           type="target"
           position={Position.Left}
           id={`${id}-input`}
-          style={{ top: '50%', width: 12, height: 12 }}
+          style={{ width: 12, height: 12, background: 'blue' }}
         />
       )}
       {hasControl1Handle && control1Target && (
@@ -58,8 +63,7 @@ const NodeBox = ({
           position={Position.Top}
           id={`${id}-control1-${control1Target.property}`}
           style={{
-            top: '25%',
-            background: '#4caf50',
+            background: 'lightgreen',
             width: 12,
             height: 12,
           }}
@@ -72,8 +76,7 @@ const NodeBox = ({
           position={Position.Bottom}
           id={`${id}-control2-${control2Target.property}`}
           style={{
-            bottom: '25%',
-            background: '#2196f3',
+            background: 'lightblue',
             width: 12,
             height: 12,
           }}
