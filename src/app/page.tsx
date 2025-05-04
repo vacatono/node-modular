@@ -7,8 +7,8 @@ export default function NodeModularPage() {
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Node Modular Editor
+        <Typography variant="h5" component="h1" gutterBottom>
+          Node Modular <small>(v0.0.1)</small>
         </Typography>
         <NodeEditor />
       </Box>
