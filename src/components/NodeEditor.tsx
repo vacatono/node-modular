@@ -22,6 +22,7 @@ import NodeReverb from '../modules/NodeReverb';
 import NodeOutput from '../modules/NodeOutput';
 import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
+import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
 // Tone.jsのオブジェクトを保持するためのマップ
 const audioNodes = new Map();
@@ -242,7 +243,7 @@ const NodeEditor = () => {
   // ノードの色を選択状態で変える
   const getNodeStyle = (node: Node) => ({
     border: selectedNodeId === node.id ? '2px solid #1976d2' : '1px solid #ccc',
-    background: selectedNodeId === node.id ? '#e3f2fd' : 'white',
+    background: selectedNodeId === node.id ? '#f3f9ff' : 'white',
     borderRadius: 8,
     boxShadow: selectedNodeId === node.id ? '0 0 0 3px #b0daf9' : 'none',
   });
@@ -279,6 +280,7 @@ const NodeEditor = () => {
             Debug Nodes
           </Button>
         </Stack>
+        <ButtonTestVCOModulation />
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <ReactFlow
