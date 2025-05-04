@@ -34,9 +34,7 @@ const NodeBox = ({
     <Box
       sx={{
         padding: 2,
-        border: '1px solid #ccc',
-        borderRadius: 1,
-        backgroundColor: 'white',
+
         minWidth: 200,
       }}
     >
