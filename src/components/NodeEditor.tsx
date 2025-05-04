@@ -27,6 +27,8 @@ import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 // Tone.jsのオブジェクトを保持するためのマップ
 const audioNodes = new Map();
 
+const debug = false;
+
 // ノードの種類を定義
 const nodeTypes: NodeTypes = {
   vco: NodeVCO,
@@ -322,16 +324,18 @@ const NodeEditor = () => {
           <Button variant="contained" onClick={() => addNode('oscilloscope')}>
             Add Oscilloscope
           </Button>
-          <Button
-            variant="contained"
-            color="warning"
-            onClick={() => {
-              console.log('AudioNodes:', audioNodes);
-              console.log('Edges:', edges);
-            }}
-          >
-            Debug Nodes/Edges
-          </Button>
+          {debug && (
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() => {
+                console.log('AudioNodes:', audioNodes);
+                console.log('Edges:', edges);
+              }}
+            >
+              Debug Nodes/Edges
+            </Button>
+          )}
         </Stack>
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
