@@ -31,7 +31,6 @@ const NodeBox = ({
   hasControl2Handle = false,
   control1Target,
   control2Target,
-  draggable = true,
 }: NodeBoxProps) => {
   return (
     <Box
@@ -88,10 +87,10 @@ const NodeBox = ({
       <Box
         sx={{
           backgroundColor: green[50],
-          p: 2,
+          color: green[900],
+          px: 2,
+          py: 1,
           borderRadius: '4px',
-          cursor: draggable ? 'move' : 'default',
-
           userSelect: 'none',
         }}
       >
