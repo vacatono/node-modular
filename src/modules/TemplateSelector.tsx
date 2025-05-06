@@ -87,9 +87,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onApplyTemplate }) 
   }, [selectedTemplate, onApplyTemplate]);
 
   return (
-    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2 }}>
+    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
       <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel size="small">connection template</InputLabel>
+        <InputLabel size="small">TEMPLATES</InputLabel>
         <Select size="small" value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)}>
           {presetTemplates.map((template) => (
             <MenuItem key={template.name} value={template.name}>
@@ -99,7 +99,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onApplyTemplate }) 
         </Select>
       </FormControl>
       <Button variant="contained" onClick={handleApplyTemplate} disabled={!selectedTemplate}>
-        テンプレートを適用
+        Apply Template
       </Button>
     </Box>
   );
