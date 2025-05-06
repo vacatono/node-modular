@@ -23,13 +23,13 @@ export const presetTemplates: FlowTemplate[] = [
       {
         id: 'vco1',
         type: 'vco',
-        position: { x: 100, y: 100 },
+        position: { x: 10, y: 10 },
         data: { label: 'VCO', frequency: 440, type: 'sine', registerAudioNode: null },
       },
       {
         id: 'toDestination',
         type: 'toDestination',
-        position: { x: 300, y: 100 },
+        position: { x: 500, y: 10 },
         data: { label: 'Output', volume: -6, registerAudioNode: null },
         deletable: false,
       },
@@ -89,13 +89,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onApplyTemplate }) 
   return (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2 }}>
       <FormControl sx={{ minWidth: 200 }}>
-        <InputLabel>テンプレート</InputLabel>
-        <Select
-          size="small"
-          value={selectedTemplate}
-          label="テンプレート"
-          onChange={(e) => setSelectedTemplate(e.target.value)}
-        >
+        <InputLabel size="small">connection template</InputLabel>
+        <Select size="small" value={selectedTemplate} onChange={(e) => setSelectedTemplate(e.target.value)}>
           {presetTemplates.map((template) => (
             <MenuItem key={template.name} value={template.name}>
               {template.name}
