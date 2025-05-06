@@ -92,6 +92,7 @@ export class AudioNodeManager {
 
         if (nodeType === 'control' && property && property in targetNode) {
           const targetParam = targetNode[property as keyof typeof targetNode];
+          console.log('targetParam', targetParam);
           if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
             console.log('Connecting control parameter:', property);
             const toneType = targetNode.constructor.name;
@@ -101,6 +102,10 @@ export class AudioNodeManager {
               const scale = new Tone.Scale(min, max);
               sourceNode.connect(scale);
               scale.connect(targetParam as Tone.InputNode);
+              console.log('targetNode', targetNode);
+              console.log('sourceNode', sourceNode);
+              console.log('targetParam', targetParam);
+              //sourceNode.connect(targetParam as Tone.InputNode);
               console.log('Connected with scale:', { min, max });
             } else {
               sourceNode.connect(targetParam as Tone.InputNode);
