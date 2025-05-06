@@ -55,17 +55,16 @@ export class AudioNodeManager {
    * @param edges - 現在のエッジ情報
    */
   registerAudioNode(nodeId: string, audioNode: Tone.ToneAudioNode, edges: Edge[]): void {
-    console.log('registerAudioNode', nodeId, audioNode, edges);
+    //console.log('registerAudioNode', nodeId, audioNode, edges);
 
     // 既存の接続を解除
     const existingNode = this.audioNodes.get(nodeId);
     if (existingNode) {
-      console.log('Disconnecting existing node:', nodeId);
-      existingNode.disconnect();
+      //console.log('Disconnecting existing node:', nodeId);
+      //existingNode.disconnect();
     }
 
     this.audioNodes.set(nodeId, audioNode);
-
     // このノードに接続している既存のエッジを探して再接続
     edges.forEach((edge) => {
       try {
@@ -98,15 +97,28 @@ export class AudioNodeManager {
             const toneType = targetNode.constructor.name;
             if (controlScales[toneType]?.[property]) {
               //  controlScales設定がある場合、Tone.Scaleを使用して接続
+
               const { min, max } = { ...controlScales[toneType][property] };
               const scale = new Tone.Scale(min, max);
               sourceNode.connect(scale);
               scale.connect(targetParam as Tone.InputNode);
-              console.log('targetNode', targetNode);
+
               console.log('sourceNode', sourceNode);
               console.log('targetParam', targetParam);
-              //sourceNode.connect(targetParam as Tone.InputNode);
               console.log('Connected with scale:', { min, max });
+
+              //console.log('sourceNode', sourceNode);
+              //sourceNode.connect(targetParam as Tone.InputNode);
+              /*
+              const lfo = new Tone.LFO({
+                min: 20,
+                max: 2000,
+                frequency: 2,
+                amplitude: 1,
+              });
+              lfo.start();
+              lfo.connect(targetParam as Tone.InputNode);
+              */
             } else {
               sourceNode.connect(targetParam as Tone.InputNode);
               console.log('Connected directly to parameter');
