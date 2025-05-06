@@ -27,7 +27,7 @@ import { audioNodeManager } from '../utils/AudioNodeManager';
 import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 //import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
-const debug = true;
+const debug = false;
 
 // ノードの種類を定義
 const nodeTypes: NodeTypes = {
