@@ -52,10 +52,13 @@ const NodeEditor = () => {
   const [panOnDrag, setPanOnDrag] = useState(true);
 
   // オーディオノード登録用のメモ化された関数
-  const registerAudioNode = useCallback((nodeId: string, audioNode: Tone.ToneAudioNode) => {
-    console.log('registerAudioNode', nodeId);
-    audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
-  }, []);
+  const registerAudioNode = useCallback(
+    (nodeId: string, audioNode: Tone.ToneAudioNode) => {
+      console.log('registerAudioNode', nodeId);
+      audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+    },
+    [edges]
+  );
 
   useEffect(() => {
     console.log('edges', edges);
