@@ -28,6 +28,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { Edge } from 'reactflow';
 import * as Tone from 'tone';
 import { Box, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
@@ -51,6 +52,8 @@ interface NodeFilterProps {
     Q?: number;
     /** オーディオノードの登録関数 */
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    /** エッジ情報 */
+    edges?: Edge[];
   };
 }
 
@@ -71,12 +74,17 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
       Q: data.Q || 1,
     });
 
-    data.registerAudioNode(id, filter.current);
-
     return () => {
       filter.current?.dispose();
     };
-  }, [id, data.type, data.Q, data.registerAudioNode]);
+  }, [id, data.type, data.frequency, data.Q]);
+
+  // オーディオノードの登録
+  useEffect(() => {
+    if (filter.current) {
+      data.registerAudioNode(id, filter.current);
+    }
+  }, [id, data.registerAudioNode, data.edges]);
 
   // フィルタータイプ変更ハンドラ
   const handleTypeChange = useCallback((event: SelectChangeEvent) => {

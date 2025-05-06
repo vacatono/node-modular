@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { Edge } from 'reactflow';
 import * as Tone from 'tone';
 import { Box } from '@mui/material';
 import NodeBox from './common/NodeBox';
@@ -10,6 +11,7 @@ interface NodeOscilloscopeProps {
     label: string;
     size?: number;
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    edges?: Edge[];
   };
   id: string;
 }
@@ -19,11 +21,9 @@ const NodeOscilloscope = ({ data, id }: NodeOscilloscopeProps) => {
   const analyserRef = useRef<Tone.Analyser | null>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
 
+  // オーディオノードの生成・破棄
   useEffect(() => {
     analyserRef.current = new Tone.Analyser('waveform', data.size || 1024);
-
-    // Tone.jsのオブジェクトを登録
-    data.registerAudioNode(id, analyserRef.current);
 
     const draw = () => {
       const canvas = canvasRef.current;
@@ -70,7 +70,14 @@ const NodeOscilloscope = ({ data, id }: NodeOscilloscopeProps) => {
         analyserRef.current.dispose();
       }
     };
-  }, [id, data.size, data.registerAudioNode]);
+  }, [id, data.size]);
+
+  // オーディオノードの登録
+  useEffect(() => {
+    if (analyserRef.current) {
+      data.registerAudioNode(id, analyserRef.current);
+    }
+  }, [id, data.registerAudioNode, data.edges]);
 
   return (
     <NodeBox id={id} label={data.label}>

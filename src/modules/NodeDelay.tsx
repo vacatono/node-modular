@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { Edge } from 'reactflow';
 import { Box } from '@mui/material';
 import * as Tone from 'tone';
 import CustomSlider from './common/CustomSlider';
@@ -12,6 +13,7 @@ interface NodeDelayProps {
     delayTime?: number;
     feedback?: number;
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    edges?: Edge[];
   };
   id: string;
 }
@@ -19,19 +21,24 @@ interface NodeDelayProps {
 const NodeDelay = ({ data, id }: NodeDelayProps) => {
   const delay = useRef<Tone.FeedbackDelay | null>(null);
 
+  // オーディオノードの生成・破棄
   useEffect(() => {
     delay.current = new Tone.FeedbackDelay({
       delayTime: data.delayTime || 0.25,
       feedback: data.feedback || 0.5,
     });
 
-    // Tone.jsのオブジェクトを登録
-    data.registerAudioNode(id, delay.current);
-
     return () => {
       delay.current?.dispose();
     };
-  }, [id, data.delayTime, data.feedback, data.registerAudioNode]);
+  }, [id, data.delayTime, data.feedback]);
+
+  // オーディオノードの登録
+  useEffect(() => {
+    if (delay.current) {
+      data.registerAudioNode(id, delay.current);
+    }
+  }, [id, data.registerAudioNode, data.edges]);
 
   const handleDelayTimeChange = useCallback((value: number | number[]) => {
     if (delay.current && typeof value === 'number') {
