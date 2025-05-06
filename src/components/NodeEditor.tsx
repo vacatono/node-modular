@@ -26,10 +26,7 @@ import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/Temp
 import { audioNodeManager } from '../utils/AudioNodeManager';
 //import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
-// Tone.jsのオブジェクトを保持するためのマップ
-const audioNodes = new Map();
-
-const debug = false;
+const debug = true;
 
 // ノードの種類を定義
 const nodeTypes: NodeTypes = {
@@ -40,29 +37,6 @@ const nodeTypes: NodeTypes = {
   toDestination: NodeOutput,
   lfo: NodeLFO,
   oscilloscope: NodeOscilloscope,
-};
-
-// controlに送信される信号(0-1)のスケール情報
-const controlScales: Record<string, Record<string, { min: number; max: number }>> = {
-  Oscillator: {
-    frequency: { min: 20, max: 2000 },
-    detune: { min: -100, max: 100 },
-  },
-  Filter: {
-    frequency: { min: 200, max: 5000 },
-    Q: { min: 0.1, max: 20 },
-  },
-  Gain: {
-    gain: { min: 0, max: 1 },
-  },
-  panner: {
-    pan: { min: -1, max: 1 },
-  },
-  Delay: {
-    delayTime: { min: 0, max: 1 },
-    feedback: { min: 0, max: 1 },
-    mix: { min: 0, max: 1 },
-  },
 };
 
 // 初期ノードを定義
@@ -193,19 +167,23 @@ const NodeEditor = () => {
           <Button variant="contained" onClick={() => addNode('oscilloscope')}>
             Add Oscilloscope
           </Button>
+        </Stack>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
           {debug && (
             <Button
               variant="contained"
               color="warning"
               onClick={() => {
+                console.log('Nodes:', nodes);
                 console.log('Edges:', edges);
               }}
             >
               Debug Nodes/Edges
             </Button>
           )}
-        </Stack>
-        <TemplateSelector onApplyTemplate={handleApplyTemplate} />
+
+          <TemplateSelector onApplyTemplate={handleApplyTemplate} />
+        </Box>
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <ReactFlow
