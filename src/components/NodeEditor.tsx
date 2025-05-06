@@ -51,6 +51,14 @@ const NodeEditor = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [panOnDrag, setPanOnDrag] = useState(true);
 
+  // オーディオノード登録用のメモ化された関数
+  const registerAudioNode = useCallback(
+    (nodeId: string, audioNode: Tone.ToneAudioNode) => {
+      audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+    },
+    [edges]
+  );
+
   // エッジが追加されたときの処理
   const onConnect = useCallback(
     (params: Connection) => {
@@ -193,9 +201,7 @@ const NodeEditor = () => {
             data: {
               ...node.data,
               draggable: selectedNodeId !== node.id,
-              registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => {
-                audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
-              },
+              registerAudioNode,
             },
           }))}
           edges={edges}
