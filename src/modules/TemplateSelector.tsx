@@ -34,7 +34,9 @@ export const presetTemplates: FlowTemplate[] = [
         deletable: false,
       },
     ],
-    edges: [{ id: 'e1-2', source: 'vco1', target: 'toDestination' }],
+    edges: [
+      { id: 'e1-2', source: 'vco1', target: 'toDestination', data: { targetType: 'audio', sourceType: 'audio' } },
+    ],
   },
   {
     name: 'VCO→フィルター→出力',
@@ -60,14 +62,14 @@ export const presetTemplates: FlowTemplate[] = [
       },
     ],
     edges: [
-      { id: 'e1-2', source: 'vco1', target: 'filter1' },
-      { id: 'e2-3', source: 'filter1', target: 'toDestination' },
+      { id: 'e1-2', source: 'vco1', target: 'filter1', data: { targetType: 'audio', sourceType: 'audio' } },
+      { id: 'e2-3', source: 'filter1', target: 'toDestination', data: { targetType: 'audio', sourceType: 'audio' } },
     ],
   },
 ];
 
 interface TemplateSelectorProps {
-  onApplyTemplate: (template: FlowTemplate) => void;
+  onApplyTemplate: (_template: FlowTemplate) => void;
 }
 
 /**
