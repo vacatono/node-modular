@@ -134,7 +134,9 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
               Frequency: {oscillator.current?.frequency.value}
               Type: {oscillator.current?.type}
             </Typography>
-            <Button variant="contained" onClick={() => console.log(oscillator.current)}></Button>
+            <Button variant="contained" onClick={() => console.log(oscillator.current)}>
+              DEBUG
+            </Button>
           </Box>
         )}
       </Box>
