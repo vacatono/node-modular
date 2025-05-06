@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -52,26 +52,29 @@ const NodeEditor = () => {
   const [panOnDrag, setPanOnDrag] = useState(true);
 
   // オーディオノード登録用のメモ化された関数
-  const registerAudioNode = useCallback(
-    (nodeId: string, audioNode: Tone.ToneAudioNode) => {
-      audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
-    },
-    [edges]
-  );
+  const registerAudioNode = useCallback((nodeId: string, audioNode: Tone.ToneAudioNode) => {
+    console.log('registerAudioNode', nodeId);
+    audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+  }, []);
+
+  useEffect(() => {
+    console.log('edges', edges);
+  }, [edges]);
 
   // エッジが追加されたときの処理
   const onConnect = useCallback(
     (params: Connection) => {
       console.log('onConnect', params);
-      const isControlConnection = params.targetHandle?.includes('-control');
 
       setEdges((eds) =>
         addEdge(
           {
             ...params,
             data: {
-              type: isControlConnection ? 'control' : 'audio',
-              targetProperty: isControlConnection ? params.targetHandle?.split('-').pop() : undefined,
+              targetType: params.targetHandle?.includes('-control') ? 'control' : 'audio',
+              targetProperty: params.targetHandle?.split('-').pop() ?? undefined,
+              sourceType: params.sourceHandle?.includes('-control') ? 'control' : 'audio',
+              sourceProperty: params.sourceHandle?.split('-').pop() ?? undefined,
             },
           },
           eds
@@ -200,6 +203,7 @@ const NodeEditor = () => {
             style: getNodeStyle(node),
             data: {
               ...node.data,
+              edges,
               draggable: selectedNodeId !== node.id,
               registerAudioNode,
             },
