@@ -22,7 +22,6 @@ interface NodeLFOProps {
 
 const NodeLFO = ({ data, id }: NodeLFOProps) => {
   const lfo = useRef<Tone.LFO | null>(null);
-  const outputSignal = useRef<Tone.Signal | null>(null);
 
   // オーディオノードの生成・破棄
   useEffect(() => {
@@ -30,13 +29,9 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
       frequency: data.frequency || 1,
       type: data.type || 'sine',
       amplitude: data.amplitude || 1,
+      min: 0,
+      max: 1,
     });
-
-    // 出力用のSignalを作成
-    outputSignal.current = new Tone.Signal(0);
-
-    // LFOの出力をSignalに接続
-    lfo.current.connect(outputSignal.current);
 
     // LFOを開始
     lfo.current.start();
@@ -44,14 +39,13 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
     return () => {
       lfo.current?.stop();
       lfo.current?.dispose();
-      outputSignal.current?.dispose();
     };
   }, [id, data.frequency, data.type, data.amplitude]);
 
   // オーディオノードの登録
   useEffect(() => {
-    if (outputSignal.current) {
-      data.registerAudioNode(id, outputSignal.current);
+    if (lfo.current) {
+      data.registerAudioNode(id, lfo.current);
     }
   }, [id, data.registerAudioNode, data.edges]);
 
@@ -74,7 +68,7 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
   }, []);
 
   return (
-    <NodeBox id={id} label={data.label}>
+    <NodeBox id={id} label={data.label} hasInputHandle={false}>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
           label="Frequency"

@@ -55,84 +55,82 @@ export class AudioNodeManager {
    * @param edges - 現在のエッジ情報
    */
   registerAudioNode(nodeId: string, audioNode: Tone.ToneAudioNode, edges: Edge[]): void {
-    console.log('registerAudioNode', nodeId, audioNode, edges);
+    //console.log('registerAudioNode', nodeId, audioNode, edges);
 
     // 既存の接続を解除
     const existingNode = this.audioNodes.get(nodeId);
     if (existingNode) {
-      existingNode.disconnect();
+      //console.log('Disconnecting existing node:', nodeId);
+      //existingNode.disconnect();
     }
 
     this.audioNodes.set(nodeId, audioNode);
-
     // このノードに接続している既存のエッジを探して再接続
     edges.forEach((edge) => {
       try {
-        if (edge.target === nodeId) {
-          console.log('edge.target === nodeId', edge);
-          const sourceNode = this.audioNodes.get(edge.source);
-          const nodeType = edge.data.targetType;
-          if (sourceNode) {
-            if (nodeType === 'control') {
-              const property = edge.data.targetProperty;
+        // このノードがターゲットの場合のみ処理
+        if (edge.target !== nodeId) return;
 
-              if (property && property in audioNode) {
-                const scaleInfo = controlScales[nodeType]?.[property];
-                if (scaleInfo) {
-                  const targetParam = audioNode[property as keyof typeof audioNode];
-                  const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
-                  sourceNode.connect(scaleNode);
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    scaleNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    sourceNode.connect(audioNode);
-                  }
-                } else {
-                  const targetParam = audioNode[property as keyof typeof audioNode];
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    sourceNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    sourceNode.connect(audioNode);
-                  }
-                }
-              }
-            } else {
-              sourceNode.connect(audioNode);
-            }
-          }
+        const sourceNode = this.audioNodes.get(edge.source);
+        const targetNode = audioNode;
+        const nodeType = edge.data.targetType;
+        const property = edge.data.targetProperty;
+
+        if (!sourceNode || !targetNode) {
+          console.log('Missing source or target node:', { sourceNode, targetNode });
+          return;
         }
 
-        if (edge.source === nodeId) {
-          console.log('edge.source === nodeId', edge);
-          const targetNode = this.audioNodes.get(edge.target);
-          const nodeType = edge.data.sourceType;
-          if (targetNode) {
-            if (nodeType === 'control') {
-              const property = edge.data.sourceProperty;
-              if (property && property in targetNode) {
-                const scaleInfo = controlScales[nodeType]?.[property];
-                if (scaleInfo) {
-                  const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
-                  audioNode.connect(scaleNode);
-                  const targetParam = targetNode[property as keyof typeof targetNode];
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    scaleNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    audioNode.connect(targetNode);
-                  }
-                } else {
-                  const targetParam = targetNode[property as keyof typeof targetNode];
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    audioNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    audioNode.connect(targetNode);
-                  }
-                }
-              }
+        console.log('Connecting nodes:', {
+          nodeId,
+          sourceNode: sourceNode.constructor.name,
+          targetNode: targetNode.constructor.name,
+          nodeType,
+          property,
+        });
+
+        if (nodeType === 'control' && property && property in targetNode) {
+          const targetParam = targetNode[property as keyof typeof targetNode];
+          console.log('targetParam', targetParam);
+          if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
+            console.log('Connecting control parameter:', property);
+            const toneType = targetNode.constructor.name;
+            if (controlScales[toneType]?.[property]) {
+              //  controlScales設定がある場合、Tone.Scaleを使用して接続
+
+              const { min, max } = { ...controlScales[toneType][property] };
+              const scale = new Tone.Scale(min, max);
+              sourceNode.connect(scale);
+              scale.connect(targetParam as Tone.InputNode);
+
+              console.log('sourceNode', sourceNode);
+              console.log('targetParam', targetParam);
+              console.log('Connected with scale:', { min, max });
+
+              //console.log('sourceNode', sourceNode);
+              //sourceNode.connect(targetParam as Tone.InputNode);
+              /*
+              const lfo = new Tone.LFO({
+                min: 20,
+                max: 2000,
+                frequency: 2,
+                amplitude: 1,
+              });
+              lfo.start();
+              lfo.connect(targetParam as Tone.InputNode);
+              */
             } else {
-              audioNode.connect(targetNode);
+              sourceNode.connect(targetParam as Tone.InputNode);
+              console.log('Connected directly to parameter');
             }
+          } else {
+            sourceNode.connect(targetNode);
+            console.log('Connected to node directly (invalid parameter)');
           }
+        } else {
+          // 通常のオーディオ接続
+          sourceNode.connect(targetNode);
+          console.log('Connected audio nodes directly');
         }
       } catch (error) {
         console.error('Error connecting audio nodes:', error);
@@ -142,6 +140,7 @@ export class AudioNodeManager {
     // 出力ノードの場合は、直接Destinationに接続
     if (nodeId === 'toDestination') {
       audioNode.toDestination();
+      console.log('Connected to destination');
     }
   }
 

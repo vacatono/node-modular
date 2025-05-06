@@ -25,6 +25,8 @@ const NodeOscilloscope = ({ data, id }: NodeOscilloscopeProps) => {
   useEffect(() => {
     analyserRef.current = new Tone.Analyser('waveform', data.size || 1024);
 
+    data.registerAudioNode(id, analyserRef.current);
+
     const draw = () => {
       const canvas = canvasRef.current;
       const analyser = analyserRef.current;
@@ -70,17 +72,17 @@ const NodeOscilloscope = ({ data, id }: NodeOscilloscopeProps) => {
         analyserRef.current.dispose();
       }
     };
-  }, [id, data.size]);
+  }, [id, data.size, data.registerAudioNode]);
 
   // オーディオノードの登録
   useEffect(() => {
     if (analyserRef.current) {
-      data.registerAudioNode(id, analyserRef.current);
+      //data.registerAudioNode(id, analyserRef.current);
     }
   }, [id, data.registerAudioNode, data.edges]);
 
   return (
-    <NodeBox id={id} label={data.label}>
+    <NodeBox id={id} label={data.label} hasOutputHandle={false}>
       <Box sx={{ mt: 2 }}>
         <canvas ref={canvasRef} width={200} height={100} style={{ border: '1px solid #ccc' }} />
       </Box>

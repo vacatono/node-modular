@@ -18,13 +18,19 @@ export type FlowTemplate = {
  */
 export const presetTemplates: FlowTemplate[] = [
   {
-    name: '基本VCO→出力',
+    name: 'LFO->VCO->OUT',
     nodes: [
       {
         id: 'vco1',
         type: 'vco',
-        position: { x: 10, y: 10 },
+        position: { x: 300, y: 200 },
         data: { label: 'VCO', frequency: 440, type: 'sine', registerAudioNode: null },
+      },
+      {
+        id: 'lfo1',
+        type: 'lfo',
+        position: { x: 10, y: 100 },
+        data: { label: 'LFO', frequency: 1, type: 'sine', registerAudioNode: null },
       },
       {
         id: 'toDestination',

@@ -24,6 +24,7 @@ import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
 import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/TemplateSelector';
 import { audioNodeManager } from '../utils/AudioNodeManager';
+import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 //import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
 const debug = false;
@@ -52,10 +53,13 @@ const NodeEditor = () => {
   const [panOnDrag, setPanOnDrag] = useState(true);
 
   // オーディオノード登録用のメモ化された関数
-  const registerAudioNode = useCallback((nodeId: string, audioNode: Tone.ToneAudioNode) => {
-    console.log('registerAudioNode', nodeId);
-    audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
-  }, []);
+  const registerAudioNode = useCallback(
+    (nodeId: string, audioNode: Tone.ToneAudioNode) => {
+      console.log('registerAudioNode', nodeId);
+      audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+    },
+    [edges]
+  );
 
   useEffect(() => {
     console.log('edges', edges);
@@ -180,7 +184,10 @@ const NodeEditor = () => {
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
-          {debug && (
+          <TemplateSelector onApplyTemplate={handleApplyTemplate} />
+        </Box>
+        {debug && (
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
             <Button
               variant="contained"
               color="warning"
@@ -191,10 +198,9 @@ const NodeEditor = () => {
             >
               Debug Nodes/Edges
             </Button>
-          )}
-
-          <TemplateSelector onApplyTemplate={handleApplyTemplate} />
-        </Box>
+            <ButtonTestVCOModulation />
+          </Box>
+        )}
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <ReactFlow
