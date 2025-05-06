@@ -68,71 +68,26 @@ export class AudioNodeManager {
     // このノードに接続している既存のエッジを探して再接続
     edges.forEach((edge) => {
       try {
-        if (edge.target === nodeId) {
-          console.log('edge.target === nodeId', edge);
-          const sourceNode = this.audioNodes.get(edge.source);
-          const nodeType = edge.data.targetType;
-          if (sourceNode) {
-            if (nodeType === 'control') {
-              const property = edge.data.targetProperty;
+        const isTarget = edge.target === nodeId;
+        const isSource = edge.source === nodeId;
+        if (!isTarget && !isSource) return;
 
-              if (property && property in audioNode) {
-                const scaleInfo = controlScales[nodeType]?.[property];
-                if (scaleInfo) {
-                  const targetParam = audioNode[property as keyof typeof audioNode];
-                  const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
-                  sourceNode.connect(scaleNode);
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    scaleNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    sourceNode.connect(audioNode);
-                  }
-                } else {
-                  const targetParam = audioNode[property as keyof typeof audioNode];
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    sourceNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    sourceNode.connect(audioNode);
-                  }
-                }
-              }
-            } else {
-              sourceNode.connect(audioNode);
-            }
-          }
-        }
+        const sourceNode = isTarget ? this.audioNodes.get(edge.source) : audioNode;
+        const targetNode = isTarget ? audioNode : this.audioNodes.get(edge.target);
+        const nodeType = isTarget ? edge.data.targetType : edge.data.sourceType;
+        const property = isTarget ? edge.data.targetProperty : edge.data.sourceProperty;
 
-        if (edge.source === nodeId) {
-          console.log('edge.source === nodeId', edge);
-          const targetNode = this.audioNodes.get(edge.target);
-          const nodeType = edge.data.sourceType;
-          if (targetNode) {
-            if (nodeType === 'control') {
-              const property = edge.data.sourceProperty;
-              if (property && property in targetNode) {
-                const scaleInfo = controlScales[nodeType]?.[property];
-                if (scaleInfo) {
-                  const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
-                  audioNode.connect(scaleNode);
-                  const targetParam = targetNode[property as keyof typeof targetNode];
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    scaleNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    audioNode.connect(targetNode);
-                  }
-                } else {
-                  const targetParam = targetNode[property as keyof typeof targetNode];
-                  if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                    audioNode.connect(targetParam as Tone.InputNode);
-                  } else {
-                    audioNode.connect(targetNode);
-                  }
-                }
-              }
-            } else {
-              audioNode.connect(targetNode);
-            }
+        if (!sourceNode || !targetNode) return;
+
+        if (nodeType === 'control' && property && property in targetNode) {
+          const targetParam = targetNode[property as keyof typeof targetNode];
+          if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
+            sourceNode.connect(targetParam as Tone.InputNode);
+          } else {
+            sourceNode.connect(targetNode);
           }
+        } else {
+          sourceNode.connect(targetNode);
         }
       } catch (error) {
         console.error('Error connecting audio nodes:', error);
