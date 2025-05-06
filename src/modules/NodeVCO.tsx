@@ -28,8 +28,6 @@ import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
 import { Edge } from 'reactflow';
 
-const debug = true;
-
 interface NodeVCOProps {
   /** ノードの一意の識別子 */
   id: string;
@@ -44,7 +42,8 @@ interface NodeVCOProps {
     /** オーディオノードの登録関数 */
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
     /** エッジのデータ */
-    edges: Edge[];
+    edges?: Edge[];
+    debug?: boolean;
   };
 }
 
@@ -134,7 +133,7 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
         <Button variant="contained" onClick={handlePlayToggle} fullWidth>
           {isPlaying ? 'Stop' : 'Start'}
         </Button>
-        {debug && (
+        {data.debug && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2">
               Frequency: {oscillator.current?.frequency.value}
