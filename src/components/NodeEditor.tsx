@@ -22,7 +22,7 @@ import NodeReverb from '../modules/NodeReverb';
 import NodeOutput from '../modules/NodeOutput';
 import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
-import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
+//import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
 // Tone.jsのオブジェクトを保持するためのマップ
 const audioNodes = new Map();
