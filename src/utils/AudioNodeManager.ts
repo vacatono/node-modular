@@ -60,6 +60,7 @@ export class AudioNodeManager {
     // 既存の接続を解除
     const existingNode = this.audioNodes.get(nodeId);
     if (existingNode) {
+      console.log('Disconnecting existing node:', nodeId);
       existingNode.disconnect();
     }
 
@@ -68,26 +69,51 @@ export class AudioNodeManager {
     // このノードに接続している既存のエッジを探して再接続
     edges.forEach((edge) => {
       try {
-        const isTarget = edge.target === nodeId;
-        const isSource = edge.source === nodeId;
-        if (!isTarget && !isSource) return;
+        // このノードがターゲットの場合のみ処理
+        if (edge.target !== nodeId) return;
 
-        const sourceNode = isTarget ? this.audioNodes.get(edge.source) : audioNode;
-        const targetNode = isTarget ? audioNode : this.audioNodes.get(edge.target);
-        const nodeType = isTarget ? edge.data.targetType : edge.data.sourceType;
-        const property = isTarget ? edge.data.targetProperty : edge.data.sourceProperty;
+        const sourceNode = this.audioNodes.get(edge.source);
+        const targetNode = audioNode;
+        const nodeType = edge.data.targetType;
+        const property = edge.data.targetProperty;
 
-        if (!sourceNode || !targetNode) return;
+        if (!sourceNode || !targetNode) {
+          console.log('Missing source or target node:', { sourceNode, targetNode });
+          return;
+        }
+
+        console.log('Connecting nodes:', {
+          nodeId,
+          sourceNode: sourceNode.constructor.name,
+          targetNode: targetNode.constructor.name,
+          nodeType,
+          property,
+        });
 
         if (nodeType === 'control' && property && property in targetNode) {
           const targetParam = targetNode[property as keyof typeof targetNode];
           if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-            sourceNode.connect(targetParam as Tone.InputNode);
+            console.log('Connecting control parameter:', property);
+            const toneType = targetNode.constructor.name;
+            if (controlScales[toneType]?.[property]) {
+              //  controlScales設定がある場合、Tone.Scaleを使用して接続
+              const { min, max } = { ...controlScales[toneType][property] };
+              const scale = new Tone.Scale(min, max);
+              sourceNode.connect(scale);
+              scale.connect(targetParam as Tone.InputNode);
+              console.log('Connected with scale:', { min, max });
+            } else {
+              sourceNode.connect(targetParam as Tone.InputNode);
+              console.log('Connected directly to parameter');
+            }
           } else {
             sourceNode.connect(targetNode);
+            console.log('Connected to node directly (invalid parameter)');
           }
         } else {
+          // 通常のオーディオ接続
           sourceNode.connect(targetNode);
+          console.log('Connected audio nodes directly');
         }
       } catch (error) {
         console.error('Error connecting audio nodes:', error);
@@ -97,6 +123,7 @@ export class AudioNodeManager {
     // 出力ノードの場合は、直接Destinationに接続
     if (nodeId === 'toDestination') {
       audioNode.toDestination();
+      console.log('Connected to destination');
     }
   }
 
