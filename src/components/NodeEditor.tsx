@@ -23,6 +23,7 @@ import NodeOutput from '../modules/NodeOutput';
 import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
 import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/TemplateSelector';
+import { audioNodeManager } from '../utils/AudioNodeManager';
 //import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
 // Tone.jsのオブジェクトを保持するためのマップ
@@ -171,32 +172,8 @@ const NodeEditor = () => {
   // エッジが追加されたときの処理
   const onConnect = useCallback(
     (params: Connection) => {
-      // onConnectのログ
       console.log('onConnect', params);
-
-      //const sourceNode = audioNodes.get(params.source);
-      //const targetNode = audioNodes.get(params.target);
       const isControlConnection = params.targetHandle?.includes('-control');
-
-      /*
-      if (sourceNode && targetNode) {
-        // 既存の接続を解除
-        sourceNode.disconnect();
-
-        // 新しい接続を作成
-        if (isControlConnection) {
-          // control用Handleへの接続の場合、ノードのcontrolTargetsに基づいて接続
-          // 例：NodeFilterの場合は、LFOからの信号がmodulationSignalに接続される
-          const property = params.targetHandle?.split('-').pop();
-          if (property && targetNode[property]) {
-            sourceNode.connect(targetNode[property]);
-          }
-        } else {
-          // 通常の接続
-          sourceNode.connect(targetNode);
-        }
-      }
-      */
 
       setEdges((eds) =>
         addEdge(
@@ -217,7 +194,7 @@ const NodeEditor = () => {
   // エッジが削除されたときの処理
   const onEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
     edgesToDelete.forEach((edge) => {
-      const sourceNode = audioNodes.get(edge.source);
+      const sourceNode = audioNodeManager.getAudioNode(edge.source);
       if (sourceNode) {
         sourceNode.disconnect();
       }
@@ -227,12 +204,7 @@ const NodeEditor = () => {
   // ノードが削除されたときの処理
   const onNodesDelete = useCallback((nodesToDelete: Node[]) => {
     nodesToDelete.forEach((node) => {
-      const audioNode = audioNodes.get(node.id);
-      if (audioNode) {
-        audioNode.disconnect();
-        audioNode.dispose();
-        audioNodes.delete(node.id);
-      }
+      audioNodeManager.deleteAudioNode(node.id);
     });
   }, []);
 
@@ -243,11 +215,16 @@ const NodeEditor = () => {
         id: `${type}-${Date.now()}`,
         type,
         position: { x: 100, y: 100 },
-        data: { label: type.toUpperCase(), registerAudioNode },
+        data: {
+          label: type.toUpperCase(),
+          registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => {
+            audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+          },
+        },
       };
       setNodes((nds) => [...nds, newNode]);
     },
-    [setNodes, registerAudioNode]
+    [setNodes, edges]
   );
 
   // ノードクリック時のハンドラ
@@ -313,7 +290,6 @@ const NodeEditor = () => {
               variant="contained"
               color="warning"
               onClick={() => {
-                console.log('AudioNodes:', audioNodes);
                 console.log('Edges:', edges);
               }}
             >
@@ -328,7 +304,12 @@ const NodeEditor = () => {
           nodes={nodes.map((node) => ({
             ...node,
             style: getNodeStyle(node),
-            data: { ...node.data, registerAudioNode },
+            data: {
+              ...node.data,
+              registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => {
+                audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+              },
+            },
           }))}
           edges={edges}
           onNodesChange={onNodesChange}
