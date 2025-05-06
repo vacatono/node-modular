@@ -77,98 +77,6 @@ const NodeEditor = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [panOnDrag, setPanOnDrag] = useState(true);
 
-  // Tone.jsのオブジェクトを登録する関数
-  const registerAudioNode = useCallback(
-    (nodeId: string, audioNode: Tone.ToneAudioNode) => {
-      // 既存の接続を解除
-      const existingNode = audioNodes.get(nodeId);
-      if (existingNode) {
-        existingNode.disconnect();
-      }
-      //console.log('registerAudioNode', nodeId, audioNode);
-      //console.log('edges', edges);
-
-      audioNodes.set(nodeId, audioNode);
-
-      // このノードに接続している既存のエッジを探して再接続
-      edges.forEach((edge) => {
-        try {
-          if (edge.target === nodeId) {
-            const sourceNode = audioNodes.get(edge.source);
-
-            console.log('nodeId', nodeId);
-            // targetからsource
-            if (sourceNode) {
-              if (edge.targetHandle?.includes('-control')) {
-                const nodeType = audioNode.name;
-                const property = edge.targetHandle?.split('-').pop();
-
-                if (property && property in audioNode) {
-                  // NodeTypeとpropertyからcontrolScalesからスケール情報を取得
-                  const scaleInfo = controlScales[nodeType]?.[property];
-                  if (scaleInfo) {
-                    console.log('scaleInfo', scaleInfo);
-                    const targetParam = audioNode[property as keyof typeof audioNode];
-                    const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
-                    sourceNode.connect(scaleNode);
-                    if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-                      scaleNode.connect(targetParam as Tone.InputNode);
-                    } else {
-                      sourceNode.connect(audioNode);
-                    }
-                  } else {
-                    sourceNode.connect(audioNode[property as keyof typeof audioNode]);
-                  }
-                }
-              } else {
-                sourceNode.connect(audioNode);
-              }
-            }
-          }
-
-          // sourceからtarget
-          if (edge.source === nodeId) {
-            const targetNode = audioNodes.get(edge.target);
-            if (targetNode) {
-              // controlパターン
-              if (edge.sourceHandle?.includes('-control')) {
-                const nodeType = targetNode.name;
-                const property = edge.sourceHandle?.split('-').pop();
-                if (property && property in targetNode) {
-                  // NodeTypeとpropertyからcontrolScalesからスケール情報を取得
-                  const scaleInfo = controlScales[nodeType]?.[property];
-                  if (scaleInfo) {
-                    // スケールノードを作成
-                    const scaleNode = new Tone.Scale(scaleInfo.min, scaleInfo.max);
-                    audioNode.connect(scaleNode);
-                    scaleNode.connect(targetNode[property as keyof typeof targetNode]);
-                  } else {
-                    audioNode.connect(targetNode[property as keyof typeof targetNode]);
-                  }
-                }
-              } else {
-                audioNode.connect(targetNode);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error connecting audio nodes:', error);
-        }
-      });
-
-      // 出力ノードの場合は、直接Destinationに接続
-      if (nodeId === 'toDestination') {
-        audioNode.toDestination();
-      }
-    },
-    [edges]
-  );
-
-  /*
-  const getAudioNode = useCallback((nodeId: string) => {
-    return audioNodes.get(nodeId);
-  }, []);
-  */
   // エッジが追加されたときの処理
   const onConnect = useCallback(
     (params: Connection) => {
@@ -318,13 +226,14 @@ const NodeEditor = () => {
           onEdgesDelete={onEdgesDelete}
           onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
-          fitView
+          //fitView
           style={{ width: '100%', height: '100%' }}
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
           minZoom={0.1}
           maxZoom={2}
+          defaultViewport={{ x: 0, y: 0, zoom: 1 }}
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
           panOnDrag={panOnDrag}
