@@ -23,9 +23,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import * as Tone from 'tone';
-import { Box, Select, MenuItem, FormControl, InputLabel, Button, SelectChangeEvent } from '@mui/material';
+import { Box, Select, MenuItem, FormControl, InputLabel, Button, SelectChangeEvent, Typography } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
+
+const debug = true;
 
 interface NodeVCOProps {
   /** ノードの一意の識別子 */
@@ -126,6 +128,15 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
         <Button variant="contained" onClick={handlePlayToggle} fullWidth>
           {isPlaying ? 'Stop' : 'Start'}
         </Button>
+        {debug && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              Frequency: {oscillator.current?.frequency.value}
+              Type: {oscillator.current?.type}
+            </Typography>
+            <Button variant="contained" onClick={() => console.log(oscillator.current)}></Button>
+          </Box>
+        )}
       </Box>
     </NodeBox>
   );
