@@ -30,10 +30,22 @@ const controlScales: Record<string, Record<string, { min: number; max: number }>
  * オーディオノードを管理するクラス
  */
 export class AudioNodeManager {
+  private static instance: AudioNodeManager | null = null;
   private audioNodes: Map<string, Tone.ToneAudioNode>;
 
-  constructor() {
+  private constructor() {
     this.audioNodes = new Map();
+  }
+
+  /**
+   * AudioNodeManagerのインスタンスを取得
+   * @returns AudioNodeManagerのインスタンス
+   */
+  public static getInstance(): AudioNodeManager {
+    if (!AudioNodeManager.instance) {
+      AudioNodeManager.instance = new AudioNodeManager();
+    }
+    return AudioNodeManager.instance;
   }
 
   /**
@@ -43,6 +55,8 @@ export class AudioNodeManager {
    * @param edges - 現在のエッジ情報
    */
   registerAudioNode(nodeId: string, audioNode: Tone.ToneAudioNode, edges: Edge[]): void {
+    console.log('registerAudioNode', nodeId, audioNode, edges);
+
     // 既存の接続を解除
     const existingNode = this.audioNodes.get(nodeId);
     if (existingNode) {
@@ -154,4 +168,4 @@ export class AudioNodeManager {
 }
 
 // シングルトンインスタンスをエクスポート
-export const audioNodeManager = new AudioNodeManager();
+export const audioNodeManager = AudioNodeManager.getInstance();
