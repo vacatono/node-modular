@@ -69,12 +69,12 @@ export class AudioNodeManager {
     edges.forEach((edge) => {
       try {
         if (edge.target === nodeId) {
+          console.log('edge.target === nodeId', edge);
           const sourceNode = this.audioNodes.get(edge.source);
-
+          const nodeType = edge.data.targetType;
           if (sourceNode) {
-            if (edge.targetHandle?.includes('-control')) {
-              const nodeType = audioNode.name;
-              const property = edge.targetHandle?.split('-').pop();
+            if (nodeType === 'control') {
+              const property = edge.data.targetProperty;
 
               if (property && property in audioNode) {
                 const scaleInfo = controlScales[nodeType]?.[property];
@@ -103,11 +103,12 @@ export class AudioNodeManager {
         }
 
         if (edge.source === nodeId) {
+          console.log('edge.source === nodeId', edge);
           const targetNode = this.audioNodes.get(edge.target);
+          const nodeType = edge.data.sourceType;
           if (targetNode) {
-            if (edge.sourceHandle?.includes('-control')) {
-              const nodeType = targetNode.name;
-              const property = edge.sourceHandle?.split('-').pop();
+            if (nodeType === 'control') {
+              const property = edge.data.sourceProperty;
               if (property && property in targetNode) {
                 const scaleInfo = controlScales[nodeType]?.[property];
                 if (scaleInfo) {
