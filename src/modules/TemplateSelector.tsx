@@ -90,7 +90,12 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onApplyTemplate }) 
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2 }}>
       <FormControl sx={{ minWidth: 200 }}>
         <InputLabel>テンプレート</InputLabel>
-        <Select value={selectedTemplate} label="テンプレート" onChange={(e) => setSelectedTemplate(e.target.value)}>
+        <Select
+          size="small"
+          value={selectedTemplate}
+          label="テンプレート"
+          onChange={(e) => setSelectedTemplate(e.target.value)}
+        >
           {presetTemplates.map((template) => (
             <MenuItem key={template.name} value={template.name}>
               {template.name}
