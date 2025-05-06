@@ -192,6 +192,7 @@ const NodeEditor = () => {
             style: getNodeStyle(node),
             data: {
               ...node.data,
+              draggable: selectedNodeId !== node.id,
               registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => {
                 audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
               },
@@ -204,7 +205,6 @@ const NodeEditor = () => {
           onEdgesDelete={onEdgesDelete}
           onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
-          //fitView
           style={{ width: '100%', height: '100%' }}
           nodesDraggable={true}
           nodesConnectable={true}
