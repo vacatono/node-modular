@@ -22,6 +22,7 @@ import NodeReverb from '../modules/NodeReverb';
 import NodeOutput from '../modules/NodeOutput';
 import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
+import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/TemplateSelector';
 //import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
 // Tone.jsのオブジェクトを保持するためのマップ
@@ -64,38 +65,10 @@ const controlScales: Record<string, Record<string, { min: number; max: number }>
 };
 
 // 初期ノードを定義
-const initialNodes: Node[] = [
-  {
-    id: 'lfo1',
-    type: 'lfo',
-    position: { x: 50, y: 50 },
-    data: { label: 'LFO', frequency: 1, type: 'sine', amplitude: 1, registerAudioNode: null },
-  },
-  {
-    id: 'vco1',
-    type: 'vco',
-    position: { x: 400, y: 100 },
-    data: { label: 'VCO', frequency: 440, type: 'sine', registerAudioNode: null },
-  },
-  {
-    id: 'oscilloscope1',
-    type: 'oscilloscope',
-    position: { x: 50, y: 400 },
-    data: { label: 'Oscilloscope', registerAudioNode: null },
-  },
-  {
-    id: 'toDestination',
-    type: 'toDestination',
-    position: { x: 500, y: 400 },
-    data: { label: 'Output', volume: -6, registerAudioNode: null },
-    deletable: false,
-  },
-];
+const initialNodes: Node[] = presetTemplates[0].nodes;
 
-const initialEdges: Edge[] = [
-  { id: 'e2-3', source: 'vco1', target: 'oscilloscope1' },
-  { id: 'e3-4', source: 'oscilloscope1', target: 'toDestination' },
-];
+// 初期エッジを定義
+const initialEdges: Edge[] = presetTemplates[0].edges;
 
 const NodeEditor = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -302,6 +275,17 @@ const NodeEditor = () => {
     boxShadow: selectedNodeId === node.id ? '0 0 0 3px #b0daf9' : 'none',
   });
 
+  /**
+   * テンプレート適用時のハンドラ
+   */
+  const handleApplyTemplate = useCallback(
+    (template: FlowTemplate) => {
+      setNodes(template.nodes);
+      setEdges(template.edges);
+    },
+    [setNodes, setEdges]
+  );
+
   return (
     <Box sx={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <Box sx={{ p: 2, borderBottom: '1px solid #ccc', backgroundColor: 'white' }}>
@@ -337,6 +321,7 @@ const NodeEditor = () => {
             </Button>
           )}
         </Stack>
+        <TemplateSelector onApplyTemplate={handleApplyTemplate} />
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <ReactFlow
