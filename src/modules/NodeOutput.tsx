@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { Edge } from 'reactflow';
 import { Box } from '@mui/material';
 import * as Tone from 'tone';
 import CustomSlider from './common/CustomSlider';
@@ -11,6 +12,7 @@ interface NodeOutputProps {
     label: string;
     volume?: number;
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    edges?: Edge[];
   };
   id: string;
 }
@@ -18,18 +20,23 @@ interface NodeOutputProps {
 const NodeOutput = ({ data, id }: NodeOutputProps) => {
   const output = useRef<Tone.Volume | null>(null);
 
+  // オーディオノードの生成・破棄
   useEffect(() => {
     output.current = new Tone.Volume({
       volume: data.volume || 0,
     }).toDestination();
 
-    // Tone.jsのオブジェクトを登録
-    data.registerAudioNode(id, output.current);
-
     return () => {
       output.current?.dispose();
     };
-  }, [id, data.volume, data.registerAudioNode]);
+  }, [id, data.volume]);
+
+  // オーディオノードの登録
+  useEffect(() => {
+    if (output.current) {
+      data.registerAudioNode(id, output.current);
+    }
+  }, [id, data.registerAudioNode, data.edges]);
 
   const handleVolumeChange = useCallback((value: number | number[]) => {
     if (output.current && typeof value === 'number') {

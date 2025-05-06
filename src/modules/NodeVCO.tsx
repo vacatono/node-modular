@@ -23,9 +23,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import * as Tone from 'tone';
-import { Box, Select, MenuItem, FormControl, InputLabel, Button, SelectChangeEvent } from '@mui/material';
+import { Box, Select, MenuItem, FormControl, InputLabel, Button, SelectChangeEvent, Typography } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
+import { Edge } from 'reactflow';
 
 interface NodeVCOProps {
   /** ノードの一意の識別子 */
@@ -40,6 +41,9 @@ interface NodeVCOProps {
     type?: Tone.ToneOscillatorType;
     /** オーディオノードの登録関数 */
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    /** エッジのデータ */
+    edges?: Edge[];
+    debug?: boolean;
   };
 }
 
@@ -53,16 +57,19 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
+    //console.log('NodeVCO useEffect', data);
     oscillator.current = new Tone.Oscillator(data.frequency || 440, data.type || 'sine');
-
-    // Tone.jsのオブジェクトを登録
-    data.registerAudioNode(id, oscillator.current);
-
     return () => {
       oscillator.current?.stop();
       oscillator.current?.dispose();
     };
-  }, [id, data.frequency, data.type, data.registerAudioNode]);
+  }, [id, data.frequency, data.type]);
+
+  useEffect(() => {
+    if (oscillator.current) {
+      data.registerAudioNode(id, oscillator.current);
+    }
+  }, [id, data.registerAudioNode, data.edges]);
 
   const handleFrequencyChange = useCallback((value: number | number[]) => {
     if (oscillator.current && typeof value === 'number') {
@@ -126,6 +133,17 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
         <Button variant="contained" onClick={handlePlayToggle} fullWidth>
           {isPlaying ? 'Stop' : 'Start'}
         </Button>
+        {data.debug && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              Frequency: {oscillator.current?.frequency.value}
+              Type: {oscillator.current?.type}
+            </Typography>
+            <Button variant="contained" onClick={() => console.log(oscillator.current)}>
+              DEBUG
+            </Button>
+          </Box>
+        )}
       </Box>
     </NodeBox>
   );

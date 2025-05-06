@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { Edge } from 'reactflow';
 import * as Tone from 'tone';
 import { Box } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
@@ -13,6 +14,7 @@ interface NodeReverbProps {
     preDelay?: number;
     wet?: number;
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    edges?: Edge[];
   };
   id: string;
 }
@@ -20,6 +22,7 @@ interface NodeReverbProps {
 const NodeReverb = ({ data, id }: NodeReverbProps) => {
   const reverb = useRef<Tone.Reverb | null>(null);
 
+  // オーディオノードの生成・破棄
   useEffect(() => {
     const initReverb = async () => {
       reverb.current = new Tone.Reverb({
@@ -28,9 +31,6 @@ const NodeReverb = ({ data, id }: NodeReverbProps) => {
         wet: data.wet || 0.5,
       });
       await reverb.current.generate();
-
-      // Tone.jsのオブジェクトを登録
-      data.registerAudioNode(id, reverb.current);
     };
 
     initReverb();
@@ -38,7 +38,14 @@ const NodeReverb = ({ data, id }: NodeReverbProps) => {
     return () => {
       reverb.current?.dispose();
     };
-  }, [id, data.decay, data.preDelay, data.wet, data.registerAudioNode]);
+  }, [id, data.decay, data.preDelay, data.wet]);
+
+  // オーディオノードの登録
+  useEffect(() => {
+    if (reverb.current) {
+      data.registerAudioNode(id, reverb.current);
+    }
+  }, [id, data.registerAudioNode, data.edges]);
 
   const handleDecayChange = useCallback((value: number | number[]) => {
     if (reverb.current && typeof value === 'number') {

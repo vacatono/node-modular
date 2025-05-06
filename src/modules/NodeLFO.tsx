@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { Edge } from 'reactflow';
 
 import { Box, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import * as Tone from 'tone';
@@ -14,6 +15,7 @@ interface NodeLFOProps {
     type?: Tone.ToneOscillatorType;
     amplitude?: number;
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    edges?: Edge[];
   };
   id: string;
 }
@@ -22,13 +24,12 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
   const lfo = useRef<Tone.LFO | null>(null);
   const outputSignal = useRef<Tone.Signal | null>(null);
 
+  // オーディオノードの生成・破棄
   useEffect(() => {
     lfo.current = new Tone.LFO({
       frequency: data.frequency || 1,
       type: data.type || 'sine',
       amplitude: data.amplitude || 1,
-      //min: 0,
-      // max: 880,
     });
 
     // 出力用のSignalを作成
@@ -40,15 +41,19 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
     // LFOを開始
     lfo.current.start();
 
-    // Tone.jsのオブジェクトを登録
-    data.registerAudioNode(id, outputSignal.current);
-
     return () => {
       lfo.current?.stop();
       lfo.current?.dispose();
       outputSignal.current?.dispose();
     };
-  }, [id, data.frequency, data.type, data.amplitude, data.registerAudioNode]);
+  }, [id, data.frequency, data.type, data.amplitude]);
+
+  // オーディオノードの登録
+  useEffect(() => {
+    if (outputSignal.current) {
+      data.registerAudioNode(id, outputSignal.current);
+    }
+  }, [id, data.registerAudioNode, data.edges]);
 
   const handleFrequencyChange = useCallback((value: number | number[]) => {
     if (lfo.current && typeof value === 'number') {
