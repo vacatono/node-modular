@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import { Handle, Position } from 'reactflow';
+import { green } from '@mui/material/colors';
 
 interface NodeBoxProps {
   id: string;
@@ -17,6 +18,7 @@ interface NodeBoxProps {
     label: string;
     property: string;
   };
+  draggable?: boolean;
 }
 
 const NodeBox = ({
@@ -29,12 +31,12 @@ const NodeBox = ({
   hasControl2Handle = false,
   control1Target,
   control2Target,
+  draggable = true,
 }: NodeBoxProps) => {
   return (
     <Box
       sx={{
         padding: 2,
-
         minWidth: 200,
       }}
     >
@@ -83,7 +85,18 @@ const NodeBox = ({
           }}
         />
       )}
-      <Typography variant="subtitle1">{label}</Typography>
+      <Box
+        sx={{
+          backgroundColor: green[50],
+          p: 2,
+          borderRadius: '4px',
+          cursor: draggable ? 'move' : 'default',
+
+          userSelect: 'none',
+        }}
+      >
+        <Typography variant="subtitle1">{label}</Typography>
+      </Box>
       {children}
     </Box>
   );
