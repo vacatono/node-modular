@@ -24,9 +24,10 @@ import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
 import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/TemplateSelector';
 import { audioNodeManager } from '../utils/AudioNodeManager';
+import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 //import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 
-const debug = false;
+const debug = true;
 
 // ノードの種類を定義
 const nodeTypes: NodeTypes = {
@@ -183,7 +184,10 @@ const NodeEditor = () => {
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
-          {debug && (
+          <TemplateSelector onApplyTemplate={handleApplyTemplate} />
+        </Box>
+        {debug && (
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
             <Button
               variant="contained"
               color="warning"
@@ -194,10 +198,9 @@ const NodeEditor = () => {
             >
               Debug Nodes/Edges
             </Button>
-          )}
-
-          <TemplateSelector onApplyTemplate={handleApplyTemplate} />
-        </Box>
+            <ButtonTestVCOModulation />
+          </Box>
+        )}
       </Box>
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <ReactFlow
