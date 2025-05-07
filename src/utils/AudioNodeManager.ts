@@ -83,8 +83,8 @@ export class AudioNodeManager {
 
         console.log('Connecting nodes:', {
           nodeId,
-          sourceNode: sourceNode.constructor.name,
-          targetNode: targetNode.constructor.name,
+          sourceNode: sourceNode.name,
+          targetNode: targetNode.name,
           nodeType,
           property,
         });
@@ -93,8 +93,9 @@ export class AudioNodeManager {
           const targetParam = targetNode[property as keyof typeof targetNode];
           console.log('targetParam', targetParam);
           if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-            console.log('Connecting control parameter:', property);
-            const toneType = targetNode.constructor.name;
+            //console.log('Connecting control parameter:', property);
+            const toneType = targetNode.name;
+            //console.log('toneType', toneType);
             if (controlScales[toneType]?.[property]) {
               //  controlScales設定がある場合、Tone.Scaleを使用して接続
 
