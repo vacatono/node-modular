@@ -44,9 +44,13 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
 
   // オーディオノードの登録
   useEffect(() => {
-    if (lfo.current) {
-      data.registerAudioNode(id, lfo.current);
-    }
+    // 50ms遅延させて登録
+    const timer = setTimeout(() => {
+      if (lfo.current) {
+        data.registerAudioNode(id, lfo.current);
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [id, data.registerAudioNode, data.edges]);
 
   const handleFrequencyChange = useCallback((value: number | number[]) => {
