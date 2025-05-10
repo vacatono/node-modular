@@ -107,6 +107,43 @@ export const presetTemplates: FlowTemplate[] = [
       { id: 'e2-3', source: 'filter1', target: 'toDestination', data: { targetType: 'audio', sourceType: 'audio' } },
     ],
   },
+  {
+    name: 'VCO->FrequencyEnvelope->Out',
+    nodes: [
+      {
+        id: 'vco1',
+        type: 'vco',
+        position: { x: 100, y: 100 },
+        data: { label: 'VCO', frequency: 440, type: 'sine', registerAudioNode: null },
+      },
+      {
+        id: 'freqEnv1',
+        type: 'frequencyEnvelope',
+        position: { x: 300, y: 100 },
+        data: {
+          label: 'Frequency Envelope',
+          attack: 0.1,
+          decay: 0.2,
+          sustain: 0.5,
+          release: 0.3,
+          minFrequency: 440,
+          maxFrequency: 880,
+          registerAudioNode: null,
+        },
+      },
+      {
+        id: 'toDestination',
+        type: 'toDestination',
+        position: { x: 500, y: 100 },
+        data: { label: 'Output', volume: -6, registerAudioNode: null },
+        deletable: false,
+      },
+    ],
+    edges: [
+      { id: 'e1-2', source: 'freqEnv1', target: 'vco1', data: { targetType: 'control', sourceType: 'audio' } },
+      { id: 'e2-3', source: 'vco1', target: 'toDestination', data: { targetType: 'audio', sourceType: 'audio' } },
+    ],
+  },
 ];
 
 interface TemplateSelectorProps {
