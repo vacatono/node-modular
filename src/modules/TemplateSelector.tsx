@@ -28,7 +28,7 @@ export const presetTemplates: FlowTemplate[] = [
       },
       {
         id: 'envelope1',
-        type: 'envelope',
+        type: 'amplitudeEnvelope',
         position: { x: 300, y: 100 },
         data: {
           label: 'Envelope',

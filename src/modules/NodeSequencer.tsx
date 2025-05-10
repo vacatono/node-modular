@@ -3,9 +3,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Edge } from 'reactflow';
 import * as Tone from 'tone';
-import { Box, Button, Grid } from '@mui/material';
+import { Box, Button, Grid, TextField } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
+import { PlayCircle, StopCircle } from '@mui/icons-material';
+import Stack from '@mui/material/Stack';
+
+/**
+ * キー名が有効かどうかをチェック
+ * @param value - チェックするキー名
+ * @returns 有効な場合はtrue
+ */
+const isValidKey = (value: string): boolean => {
+  // 数値（Hz）の場合
+  if (!isNaN(Number(value)) && Number(value) > 0) {
+    return true;
+  }
+  // Tone.jsのノート表記の場合
+  try {
+    Tone.Frequency(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 /**
  * シーケンサーノードのラッパークラス
@@ -97,6 +118,14 @@ class SequencerNode extends Tone.ToneAudioNode {
   }
 
   /**
+   * キー名の設定
+   */
+  setKeys(newKeys: string[]): void {
+    this.keys = newKeys;
+    this.grid = Array(this.keys.length).fill(Array(this.steps).fill(false));
+  }
+
+  /**
    * シーケンスの開始
    */
   start(): void {
@@ -142,8 +171,10 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(data.tempo || 120);
   const [steps, setSteps] = useState(data.steps || 8);
-  const [keys] = useState(data.keys || ['A4', 'C4', 'D4', 'E4', 'G4']);
+  const [keys, setKeys] = useState(data.keys || ['A4', 'C4', 'D4', 'E4', 'G4']);
   const [grid, setGrid] = useState<boolean[][]>(Array(keys.length).fill(Array(steps).fill(false)));
+  const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
+  const [editingKeyValue, setEditingKeyValue] = useState<string>('');
 
   useEffect(() => {
     // シーケンサーの初期化
@@ -161,9 +192,47 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
     };
   }, [id, steps, keys, tempo, data.registerAudioNode]);
 
+  // キー名変更ハンドラ
+  const handleKeyChange = useCallback((index: number, newKey: string) => {
+    setEditingKeyIndex(index);
+    setEditingKeyValue(newKey);
+  }, []);
+
+  // キー名確定ハンドラ
+  const handleKeyBlur = useCallback(
+    (index: number) => {
+      if (editingKeyIndex === null) return;
+
+      if (isValidKey(editingKeyValue)) {
+        setKeys((prevKeys) => {
+          const newKeys = [...prevKeys];
+          newKeys[index] = editingKeyValue;
+          if (sequencer.current) {
+            sequencer.current.setKeys(newKeys);
+          }
+          return newKeys;
+        });
+      }
+      setEditingKeyIndex(null);
+      setEditingKeyValue('');
+    },
+    [editingKeyIndex, editingKeyValue]
+  );
+
+  // キー名入力中のEnterキーハンドラ
+  const handleKeyPress = useCallback(
+    (event: React.KeyboardEvent, index: number) => {
+      if (event.key === 'Enter') {
+        handleKeyBlur(index);
+      }
+    },
+    [handleKeyBlur]
+  );
+
   // テンポ変更ハンドラ
-  const handleTempoChange = useCallback((value: number | number[]) => {
-    if (typeof value === 'number') {
+  const handleTempoChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(event.target.value, 10);
+    if (!isNaN(value) && value >= 40 && value <= 240) {
       setTempo(value);
       Tone.Transport.bpm.value = value;
     }
@@ -171,8 +240,9 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
 
   // ステップ数変更ハンドラ
   const handleStepsChange = useCallback(
-    (value: number | number[]) => {
-      if (typeof value === 'number') {
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(event.target.value, 10);
+      if (!isNaN(value) && value >= 1 && value <= 32) {
         setSteps(value);
         setGrid(Array(keys.length).fill(Array(value).fill(false)));
       }
@@ -180,11 +250,36 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
     [keys.length]
   );
 
+  // ノート行数変更ハンドラ
+  const handleNoteRowsChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const value = parseInt(event.target.value, 10);
+      if (!isNaN(value) && value >= 1 && value <= 16) {
+        const newKeys = [...keys];
+        // 行数が増えた場合、新しい行のデフォルトキーを設定
+        while (newKeys.length < value) {
+          newKeys.push('C4');
+        }
+        // 行数が減った場合、配列を切り詰める
+        newKeys.length = value;
+        setKeys(newKeys);
+        setGrid(Array(value).fill(Array(steps).fill(false)));
+      }
+    },
+    [keys, steps]
+  );
+
   // グリッドセルクリックハンドラ
   const handleCellClick = useCallback((rowIndex: number, colIndex: number) => {
     setGrid((prevGrid) => {
-      const newGrid = prevGrid.map((row) => [...row]);
-      newGrid[rowIndex][colIndex] = !newGrid[rowIndex][colIndex];
+      const newGrid = prevGrid.map((row) => {
+        // 同じステップの他のキーをすべてオフにする
+        const newRow = [...row];
+        newRow[colIndex] = false;
+        return newRow;
+      });
+      // クリックされたセルがオンの場合はオフに、オフの場合はオンにする
+      newGrid[rowIndex][colIndex] = !prevGrid[rowIndex][colIndex];
       if (sequencer.current) {
         sequencer.current.setGrid(newGrid);
       }
@@ -208,40 +303,82 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   return (
     <NodeBox id={id} label={data.label}>
       <Box sx={{ p: 2 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <CustomSlider label="Tempo" min={40} max={240} step={1} defaultValue={tempo} onChange={handleTempoChange} />
-          </Grid>
-          <Grid item xs={12}>
-            <CustomSlider label="Steps" min={1} max={32} step={1} defaultValue={steps} onChange={handleStepsChange} />
-          </Grid>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              color={isPlaying ? 'secondary' : 'primary'}
-              onClick={handlePlayToggle}
-              fullWidth
-            >
-              {isPlaying ? 'Stop' : 'Play'}
-            </Button>
-          </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ display: 'grid', gap: 1 }}>
-              {grid.map((row, rowIndex) => (
-                <Box key={rowIndex} sx={{ display: 'flex', gap: 1 }}>
-                  {row.map((cell, colIndex) => (
-                    <Button
-                      key={colIndex}
-                      variant={cell ? 'contained' : 'outlined'}
-                      onClick={() => handleCellClick(rowIndex, colIndex)}
-                      sx={{ minWidth: '40px', height: '40px' }}
-                    />
-                  ))}
-                </Box>
-              ))}
-            </Box>
-          </Grid>
-        </Grid>
+        <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+          <TextField
+            label="Tempo"
+            type="number"
+            value={tempo}
+            onChange={handleTempoChange}
+            inputProps={{
+              min: 40,
+              max: 240,
+              step: 1,
+              sx: { p: 1 },
+            }}
+            sx={{ width: '100px' }}
+          />
+          <TextField
+            label="Steps"
+            type="number"
+            value={steps}
+            onChange={handleStepsChange}
+            inputProps={{
+              min: 1,
+              max: 32,
+              step: 1,
+              sx: { p: 1 },
+            }}
+            sx={{ width: '100px' }}
+          />
+          <TextField
+            label="Note Rows"
+            type="number"
+            value={keys.length}
+            onChange={handleNoteRowsChange}
+            inputProps={{
+              min: 1,
+              max: 20,
+              step: 1,
+              sx: { p: 1 },
+            }}
+            sx={{ width: '100px' }}
+          />
+          <Button
+            variant="contained"
+            color={isPlaying ? 'secondary' : 'primary'}
+            onClick={handlePlayToggle}
+            startIcon={isPlaying ? <StopCircle /> : <PlayCircle />}
+            sx={{ ml: 1, minWidth: 120 }}
+          >
+            {isPlaying ? 'Stop' : 'Start'}
+          </Button>
+        </Stack>
+        <Box sx={{ overflowX: 'auto', width: 'fit-content', minWidth: 0 }}>
+          <Box sx={{ display: 'grid', gap: 1 }}>
+            {grid.map((row, rowIndex) => (
+              <Box key={rowIndex} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <TextField
+                  value={editingKeyIndex === rowIndex ? editingKeyValue : keys[rowIndex]}
+                  onChange={(e) => handleKeyChange(rowIndex, e.target.value)}
+                  onBlur={() => handleKeyBlur(rowIndex)}
+                  onKeyPress={(e) => handleKeyPress(e, rowIndex)}
+                  error={editingKeyIndex === rowIndex && !isValidKey(editingKeyValue)}
+                  helperText={editingKeyIndex === rowIndex && !isValidKey(editingKeyValue) ? '無効なキー名' : ''}
+                  sx={{ width: '80px' }}
+                  inputProps={{ sx: { p: 1 } }}
+                />
+                {row.map((cell, colIndex) => (
+                  <Button
+                    key={colIndex}
+                    variant={cell ? 'contained' : 'outlined'}
+                    onClick={() => handleCellClick(rowIndex, colIndex)}
+                    sx={{ minWidth: '40px', height: '40px' }}
+                  />
+                ))}
+              </Box>
+            ))}
+          </Box>
+        </Box>
       </Box>
     </NodeBox>
   );

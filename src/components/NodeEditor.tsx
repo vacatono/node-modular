@@ -193,6 +193,9 @@ const NodeEditor = () => {
           <Button variant="contained" onClick={() => addNode('frequencyEnvelope')}>
             Add Frequency Envelope
           </Button>
+          <Button variant="contained" onClick={() => addNode('sequencer')}>
+            Add Sequencer
+          </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
           <TemplateSelector onApplyTemplate={handleApplyTemplate} />
