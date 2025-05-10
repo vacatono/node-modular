@@ -25,7 +25,8 @@ import NodeOscilloscope from '../modules/NodeOscilloscope';
 import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/TemplateSelector';
 import { audioNodeManager } from '../utils/AudioNodeManager';
 import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
-import NodeEnvelope from '@/modules/NodeEnvelope';
+import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
+import NodeFrequencyEnvelope from '@/modules/NodeFrequencyEnvelope';
 
 const debug = true;
 
@@ -38,7 +39,8 @@ const nodeTypes: NodeTypes = {
   toDestination: NodeOutput,
   lfo: NodeLFO,
   oscilloscope: NodeOscilloscope,
-  envelope: NodeEnvelope,
+  amplitudeEnvelope: NodeAmplitudeEnvelope,
+  frequencyEnvelope: NodeFrequencyEnvelope,
 };
 
 // 初期ノードを定義
@@ -183,8 +185,11 @@ const NodeEditor = () => {
           <Button variant="contained" onClick={() => addNode('oscilloscope')}>
             Add Oscilloscope
           </Button>
-          <Button variant="contained" onClick={() => addNode('envelope')}>
-            Add Envelope
+          <Button variant="contained" onClick={() => addNode('amplitudeEnvelope')}>
+            Add Amplitude Envelope
+          </Button>
+          <Button variant="contained" onClick={() => addNode('frequencyEnvelope')}>
+            Add Frequency Envelope
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
