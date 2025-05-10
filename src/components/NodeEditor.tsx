@@ -27,6 +27,7 @@ import { audioNodeManager } from '../utils/AudioNodeManager';
 import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
 import NodeFrequencyEnvelope from '@/modules/NodeFrequencyEnvelope';
+import NodeSequencer from '@/modules/NodeSequencer';
 
 const debug = true;
 
@@ -41,6 +42,7 @@ const nodeTypes: NodeTypes = {
   oscilloscope: NodeOscilloscope,
   amplitudeEnvelope: NodeAmplitudeEnvelope,
   frequencyEnvelope: NodeFrequencyEnvelope,
+  sequencer: NodeSequencer,
 };
 
 // 初期ノードを定義
