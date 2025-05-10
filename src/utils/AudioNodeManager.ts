@@ -57,7 +57,7 @@ export class AudioNodeManager {
   registerAudioNode(nodeId: string, audioNode: Tone.ToneAudioNode, edges: Edge[]): void {
     //console.log('registerAudioNode', nodeId, audioNode, edges);
 
-    // 既存の接続を解除
+    // 既存の接続を解除 --- しない
     const existingNode = this.audioNodes.get(nodeId);
     if (existingNode) {
       //console.log('Disconnecting existing node:', nodeId);
@@ -70,10 +70,13 @@ export class AudioNodeManager {
       try {
         // このノードがターゲットの場合のみ処理
         if (edge.target !== nodeId) return;
-
+        //  接続元
         const sourceNode = this.audioNodes.get(edge.source);
+        //  接続先
         const targetNode = audioNode;
+        //  接続先のノードのタイプ
         const nodeType = edge.data.targetType;
+        //  接続先のノードのプロパティ
         const property = edge.data.targetProperty;
 
         if (!sourceNode || !targetNode) {
@@ -90,6 +93,7 @@ export class AudioNodeManager {
         });
 
         if (nodeType === 'control' && property && property in targetNode) {
+          // 制御信号の場合、edge.data.targetProperty設定されたpropertyに接続
           const targetParam = targetNode[property as keyof typeof targetNode];
           console.log('targetParam', targetParam);
           if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
@@ -125,6 +129,7 @@ export class AudioNodeManager {
               console.log('Connected directly to parameter');
             }
           } else {
+            // sourceNodeを直接targetNodeに接続
             sourceNode.connect(targetNode);
             console.log('Connected to node directly (invalid parameter)');
           }
