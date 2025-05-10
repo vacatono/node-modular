@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { Box } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
 
@@ -13,13 +13,14 @@ interface NodeEnvelopeProps {
     decay?: number;
     sustain?: number;
     release?: number;
-    registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
   };
   id: string;
 }
 
 const NodeEnvelope = ({ data, id }: NodeEnvelopeProps) => {
   const envelope = useRef<Tone.AmplitudeEnvelope | null>(null);
+  const isTriggered = useRef(false);
 
   useEffect(() => {
     envelope.current = new Tone.AmplitudeEnvelope({
@@ -60,8 +61,33 @@ const NodeEnvelope = ({ data, id }: NodeEnvelopeProps) => {
     }
   }, []);
 
+  const handleTriggerStart = useCallback(() => {
+    if (envelope.current && !isTriggered.current) {
+      envelope.current.triggerAttack();
+      isTriggered.current = true;
+    }
+  }, []);
+
+  const handleTriggerEnd = useCallback(() => {
+    if (envelope.current && isTriggered.current) {
+      envelope.current.triggerRelease();
+      isTriggered.current = false;
+    }
+  }, []);
+
   return (
     <NodeBox id={id} label={data.label}>
+      <Box sx={{ mt: 2 }}>
+        <Button
+          variant="contained"
+          onMouseDown={handleTriggerStart}
+          onMouseUp={handleTriggerEnd}
+          onMouseLeave={handleTriggerEnd}
+          sx={{ width: '100%' }}
+        >
+          Trigger
+        </Button>
+      </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
           label="Attack"
