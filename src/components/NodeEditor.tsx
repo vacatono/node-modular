@@ -59,9 +59,9 @@ const NodeEditor = () => {
 
   // オーディオノード登録用のメモ化された関数
   const registerAudioNode = useCallback(
-    (nodeId: string, audioNode: Tone.ToneAudioNode) => {
-      console.log('registerAudioNode', nodeId);
-      audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+    (nodeId: string, audioNode: Tone.ToneAudioNode, params?: Record<string, { min: number; max: number }>) => {
+      console.log('registerAudioNode', nodeId, params);
+      audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
     },
     [edges]
   );
@@ -119,8 +119,8 @@ const NodeEditor = () => {
         position: { x: 100, y: 100 },
         data: {
           label: type.toUpperCase(),
-          registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode) => {
-            audioNodeManager.registerAudioNode(nodeId, audioNode, edges);
+          registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode, params?: Record<string, { min: number; max: number }>) => {
+            audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
           },
         },
       };

@@ -40,7 +40,7 @@ interface NodeVCOProps {
     /** 波形タイプ（デフォルト: 'sine'） */
     type?: Tone.ToneOscillatorType;
     /** オーディオノードの登録関数 */
-    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode, _params?: Record<string, { min: number; max: number }>) => void;
     /** エッジのデータ */
     edges?: Edge[];
     debug?: boolean;
@@ -67,7 +67,10 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
 
   useEffect(() => {
     if (oscillator.current) {
-      data.registerAudioNode(id, oscillator.current);
+      data.registerAudioNode(id, oscillator.current, {
+        frequency: { min: 20, max: 2000 },
+        detune: { min: -100, max: 100 },
+      });
     }
   }, [id, data.registerAudioNode, data.edges]);
 

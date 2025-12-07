@@ -4,37 +4,17 @@ import { Edge } from 'reactflow';
 /**
  * オーディオノードのコントロールスケール情報
  */
-const controlScales: Record<string, Record<string, { min: number; max: number }>> = {
-  Oscillator: {
-    frequency: { min: 20, max: 2000 },
-    detune: { min: -100, max: 100 },
-  },
-  Filter: {
-    frequency: { min: 200, max: 5000 },
-    Q: { min: 0.1, max: 20 },
-  },
-  Gain: {
-    gain: { min: 0, max: 1 },
-  },
-  panner: {
-    pan: { min: -1, max: 1 },
-  },
-  Delay: {
-    delayTime: { min: 0, max: 1 },
-    feedback: { min: 0, max: 1 },
-    mix: { min: 0, max: 1 },
-  },
-};
-
 /**
  * オーディオノードを管理するクラス
  */
 export class AudioNodeManager {
   private static instance: AudioNodeManager | null = null;
   private audioNodes: Map<string, Tone.ToneAudioNode>;
+  private nodeParams: Map<string, Record<string, { min: number; max: number }>>;
 
   private constructor() {
     this.audioNodes = new Map();
+    this.nodeParams = new Map();
   }
 
   /**
@@ -53,85 +33,77 @@ export class AudioNodeManager {
    * @param nodeId - ノードのID
    * @param audioNode - 登録するTone.jsのオーディオノード
    * @param edges - 現在のエッジ情報
+   * @param params - (Optional) コントロールパラメータの最小・最大値情報
    */
-  registerAudioNode(nodeId: string, audioNode: Tone.ToneAudioNode, edges: Edge[]): void {
-    //console.log('registerAudioNode', nodeId, audioNode, edges);
+  registerAudioNode(
+    nodeId: string,
+    audioNode: Tone.ToneAudioNode,
+    edges: Edge[],
+    params?: Record<string, { min: number; max: number }>
+  ): void {
+    //console.log('registerAudioNode', nodeId, audioNode, edges, params);
 
-    // 既存の接続を解除 --- しない
-    const existingNode = this.audioNodes.get(nodeId);
-    if (existingNode) {
-      //console.log('Disconnecting existing node:', nodeId);
-      //existingNode.disconnect();
+    // パラメータ情報を保存
+    if (params) {
+      this.nodeParams.set(nodeId, params);
     }
 
+    // 既存のノード更新（切断はしない方針）
     this.audioNodes.set(nodeId, audioNode);
+
     // このノードに接続している既存のエッジを探して再接続
     edges.forEach((edge) => {
       try {
         // このノードがターゲットの場合のみ処理
         if (edge.target !== nodeId) return;
-        //  接続元
+        
+        // 接続元
         const sourceNode = this.audioNodes.get(edge.source);
-        //  接続先
+        // 接続先
         const targetNode = audioNode;
-        //  接続先のノードのタイプ
+        // 接続タイプとプロパティ
         const nodeType = edge.data.targetType;
-        //  接続先のノードのプロパティ
         const property = edge.data.targetProperty;
 
         if (!sourceNode || !targetNode) {
-          console.log('Missing source or target node:', { sourceNode, targetNode });
+          // console.log('Missing source or target node:', { sourceNode, targetNode });
           return;
         }
 
         console.log('Connecting nodes:', {
-          nodeId,
-          sourceNode: sourceNode.name,
-          targetNode: targetNode.name,
-          nodeType,
+          source: edge.source,
+          target: nodeId,
+          type: nodeType,
           property,
         });
 
-        if (nodeType === 'control' && property && property in targetNode) {
-          // 制御信号の場合、edge.data.targetProperty設定されたpropertyに接続
-          const targetParam = targetNode[property as keyof typeof targetNode];
-          console.log('targetParam', targetParam);
-          if (targetParam !== undefined && typeof (targetParam as any).connect === 'function') {
-            //console.log('Connecting control parameter:', property);
-            const toneType = targetNode.name;
-            //console.log('toneType', toneType);
-            if (controlScales[toneType]?.[property]) {
-              //  controlScales設定がある場合、Tone.Scaleを使用して接続
+        if (nodeType === 'control' && property) {
+          // ターゲットのパラメータ定義を取得
+          const targetParams = this.nodeParams.get(nodeId);
+          const paramDef = targetParams?.[property];
+          
+          // Tone.jsのAudioParamに接続できるか確認
+          // @ts-ignore: Dynamic property access
+          const targetParam = targetNode[property];
 
-              const { min, max } = { ...controlScales[toneType][property] };
+          if (targetParam && typeof targetParam.connect === 'function') {
+            if (paramDef) {
+              // パラメータ定義がある場合、Scaleを使用して接続
+              const { min, max } = paramDef;
               const scale = new Tone.Scale(min, max);
+              
+              // ソース -> Scale -> ターゲットパラメータ
               sourceNode.connect(scale);
-              scale.connect(targetParam as Tone.InputNode);
-
-              console.log('sourceNode', sourceNode);
-              console.log('targetParam', targetParam);
-              console.log('Connected with scale:', { min, max });
-
-              //console.log('sourceNode', sourceNode);
-              //sourceNode.connect(targetParam as Tone.InputNode);
-              /*
-              const lfo = new Tone.LFO({
-                min: 20,
-                max: 2000,
-                frequency: 2,
-                amplitude: 1,
-              });
-              lfo.start();
-              lfo.connect(targetParam as Tone.InputNode);
-              */
+              scale.connect(targetParam);
+              
+              console.log(`Connected with scale [${min}, ${max}] to ${property}`);
             } else {
-              sourceNode.connect(targetParam as Tone.InputNode);
-              console.log('Connected directly to parameter');
+              // 定義がない場合は直接接続（Audio -> Audio Modulationなど）
+              sourceNode.connect(targetParam);
+              console.log(`Connected directly to ${property} (no params defined)`);
             }
           } else {
-            // sourceNodeを直接targetNodeに接続
-            sourceNode.connect(targetNode);
-            console.log('Connected to node directly (invalid parameter)');
+            console.warn(`Target property ${property} is not a valid AudioParam`);
           }
         } else {
           // 通常のオーディオ接続

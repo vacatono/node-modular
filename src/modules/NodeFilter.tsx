@@ -51,7 +51,7 @@ interface NodeFilterProps {
     /** レゾナンス（Q値）（デフォルト: 1） */
     Q?: number;
     /** オーディオノードの登録関数 */
-    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode, _params?: Record<string, { min: number; max: number }>) => void;
     /** エッジ情報 */
     edges?: Edge[];
   };
@@ -82,7 +82,10 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
   // オーディオノードの登録
   useEffect(() => {
     if (filter.current) {
-      data.registerAudioNode(id, filter.current);
+      data.registerAudioNode(id, filter.current, {
+        frequency: { min: 200, max: 5000 },
+        Q: { min: 0.1, max: 20 },
+      });
     }
   }, [id, data.registerAudioNode, data.edges]);
 

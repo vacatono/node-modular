@@ -12,7 +12,7 @@ interface NodeDelayProps {
     label: string;
     delayTime?: number;
     feedback?: number;
-    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode, _params?: Record<string, { min: number; max: number }>) => void;
     edges?: Edge[];
   };
   id: string;
@@ -36,7 +36,10 @@ const NodeDelay = ({ data, id }: NodeDelayProps) => {
   // オーディオノードの登録
   useEffect(() => {
     if (delay.current) {
-      data.registerAudioNode(id, delay.current);
+      data.registerAudioNode(id, delay.current, {
+        delayTime: { min: 0, max: 1 },
+        feedback: { min: 0, max: 1 },
+      });
     }
   }, [id, data.registerAudioNode, data.edges]);
 
