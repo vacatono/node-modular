@@ -92,7 +92,8 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
         oscillator.current.stop();
       } else {
         // Tone.jsのコンテキストを開始
-        //await Tone.start();
+        await Tone.start();
+        console.log('Audio Context State:', Tone.context.state);
         oscillator.current.start();
       }
       setIsPlaying(!isPlaying);
