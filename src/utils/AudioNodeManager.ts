@@ -78,6 +78,19 @@ export class AudioNodeManager {
         });
 
         if (nodeType === 'control' && property) {
+          if (property === 'trigger') {
+            // トリガー接続（Sequencer -> Envelopeなど）
+            // @ts-ignore
+            if (typeof sourceNode.connectTrigger === 'function') {
+              // @ts-ignore
+              sourceNode.connectTrigger(targetNode);
+              console.log('Connected trigger', { source: edge.source, target: nodeId });
+            } else {
+               console.warn('Source node does not support connectTrigger');
+            }
+            return;
+          }
+
           // ターゲットのパラメータ定義を取得
           const targetParams = this.nodeParams.get(nodeId);
           const paramDef = targetParams?.[property];
