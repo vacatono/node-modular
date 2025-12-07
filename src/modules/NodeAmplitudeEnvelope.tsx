@@ -76,7 +76,12 @@ const NodeAmplitudeEnvelope = ({ data, id }: NodeAmplitudeEnvelopeProps) => {
   }, []);
 
   return (
-    <NodeBox id={id} label={data.label}>
+    <NodeBox
+      id={id}
+      label={data.label}
+      hasControl1Handle={true}
+      control1Target={{ label: 'Trigger', property: 'trigger' }}
+    >
       <Box sx={{ mt: 2 }}>
         <Button
           variant="contained"

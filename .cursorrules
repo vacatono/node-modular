@@ -1,5 +1,15 @@
+# AI Agent Behavior Rules
+
+**Language Preference**:
+- Always communicate in **Japanese**.
+- Write all documentation and artifacts (including comments, commit messages, and markdown files) in **Japanese** unless explicitly requested otherwise.
 {
+  "description": "AI Agent Guidelines: Always communicate and write documentation in Japanese.",
   "language": "ja",
+  "agent": {
+    "language": "ja",
+    "instruction": "All interactions, documents, and code comments must be in Japanese."
+  },
   "commit": {
     "message": {
       "language": "ja",

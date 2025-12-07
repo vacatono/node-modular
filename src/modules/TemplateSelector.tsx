@@ -144,6 +144,53 @@ export const presetTemplates: FlowTemplate[] = [
       { id: 'e2-3', source: 'vco1', target: 'toDestination', data: { targetType: 'audio', sourceType: 'audio' } },
     ],
   },
+  {
+    name: 'Sequencer Test',
+    nodes: [
+      { id: 'seq-1', type: 'sequencer', position: { x: 50, y: 50 }, data: { label: 'Sequencer', registerAudioNode: null } },
+      { id: 'vco-1', type: 'vco', position: { x: 350, y: 50 }, data: { label: 'VCO', registerAudioNode: null } },
+      { id: 'env-1', type: 'amplitudeEnvelope', position: { x: 350, y: 300 }, data: { label: 'Envelope', registerAudioNode: null } },
+      { id: 'out-1', type: 'toDestination', position: { x: 650, y: 300 }, data: { label: 'Output', registerAudioNode: null } },
+    ],
+    edges: [
+      // Sequencer Output(Gate) -> Envelope Trigger
+      {
+        id: 'e-seq-gate-env-trig',
+        source: 'seq-1',
+        target: 'env-1',
+        sourceHandle: 'seq-1-gate',    // Custom handle ID
+        targetHandle: 'env-1-control1-trigger', // NodeBox ID format
+        data: { targetType: 'trigger', targetProperty: 'trigger' }
+      },
+      // Sequencer Input(Note) -> VCO Frequency
+      {
+        id: 'e-seq-note-vco-freq',
+        source: 'seq-1',
+        target: 'vco-1',
+        sourceHandle: 'seq-1-note',     // Custom handle ID
+        targetHandle: 'vco-1-control1-frequency', // NodeBox ID format
+        data: { targetType: 'control', targetProperty: 'frequency' }
+      },
+      // VCO -> Envelope
+      {
+        id: 'e-vco-env',
+        source: 'vco-1',
+        target: 'env-1',
+        sourceHandle: 'vco-1-output',
+        targetHandle: 'env-1-input',
+        data: { targetType: 'audio' }
+      },
+      // Envelope -> Output
+      {
+        id: 'e-env-out',
+        source: 'env-1',
+        target: 'out-1',
+        sourceHandle: 'env-1-output',
+        targetHandle: 'out-1-input',
+        data: { targetType: 'audio' }
+      },
+    ],
+  },
 ];
 
 interface TemplateSelectorProps {

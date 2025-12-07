@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Edge } from 'reactflow';
+import { Edge, Handle, Position } from 'reactflow';
 import * as Tone from 'tone';
 import { Box, Button, Grid, TextField } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
@@ -34,11 +34,12 @@ const isValidKey = (value: string): boolean => {
  */
 class SequencerNode extends Tone.ToneAudioNode {
   private sequence: Tone.Sequence;
-  private noteOutput: Tone.Gain;
+  private noteOutput: Tone.Signal; // Changed from Gain to Signal
   private gateOutput: Tone.Gain;
   private grid: boolean[][];
   private keys: string[];
   private steps: number;
+  private connectedTriggers: any[] = []; // List of connected envelope triggers
 
   constructor(options: { steps?: number; keys?: string[]; tempo?: number }) {
     super();
@@ -47,7 +48,7 @@ class SequencerNode extends Tone.ToneAudioNode {
     this.grid = Array(this.keys.length).fill(Array(this.steps).fill(false));
 
     // 出力ノードの初期化
-    this.noteOutput = new Tone.Gain(1);
+    this.noteOutput = new Tone.Signal(0); // Initialize with 0 frequency
     this.gateOutput = new Tone.Gain(1);
 
     // シーケンスの初期化
@@ -56,12 +57,22 @@ class SequencerNode extends Tone.ToneAudioNode {
         this.grid.forEach((row, rowIndex) => {
           if (row[step]) {
             const note = this.keys[rowIndex];
-            // ノート出力
-            this.noteOutput.gain.setValueAtTime(1, time);
-            this.noteOutput.gain.setValueAtTime(0, time + 0.1);
+            const frequency = Tone.Frequency(note).toFrequency();
+
+            // ノート出力（周波数値を送信）
+            this.noteOutput.setValueAtTime(frequency, time);
+
             // ゲート出力
             this.gateOutput.gain.setValueAtTime(1, time);
             this.gateOutput.gain.setValueAtTime(0, time + 0.1);
+
+            // トリガー接続（Envelope等をトリガー）
+            this.connectedTriggers.forEach(target => {
+              if (target && typeof target.triggerAttackRelease === 'function') {
+                // 16分音符分の長さでトリガー
+                target.triggerAttackRelease("16n", time);
+              }
+            });
           }
         });
       },
@@ -111,6 +122,16 @@ class SequencerNode extends Tone.ToneAudioNode {
   }
 
   /**
+   * トリガー出力先として登録
+   * AudioNodeManagerから呼び出される
+   */
+  connectTrigger(target: any): void {
+    if (!this.connectedTriggers.includes(target)) {
+      this.connectedTriggers.push(target);
+    }
+  }
+
+  /**
    * グリッドの状態を更新
    */
   setGrid(newGrid: boolean[][]): void {
@@ -146,6 +167,7 @@ class SequencerNode extends Tone.ToneAudioNode {
     this.sequence.dispose();
     this.noteOutput.dispose();
     this.gateOutput.dispose();
+    this.connectedTriggers = [];
     super.dispose();
     return this;
   }
@@ -301,8 +323,30 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   }, [isPlaying]);
 
   return (
-    <NodeBox id={id} label={data.label}>
-      <Box sx={{ p: 2 }}>
+    <NodeBox id={id} label={data.label} hasOutputHandle={false}>
+      <Box sx={{ p: 2, position: 'relative' }}>
+        {/* Note Output Handle */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`${id}-note`}
+          style={{ top: 20, background: 'orange' }}
+        />
+        <Box sx={{ position: 'absolute', right: -10, top: 20, transform: 'translateX(100%)', fontSize: '10px' }}>
+          Note
+        </Box>
+
+        {/* Gate Output Handle */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`${id}-gate`}
+          style={{ top: 50, background: 'red' }}
+        />
+        <Box sx={{ position: 'absolute', right: -10, top: 50, transform: 'translateX(100%)', fontSize: '10px' }}>
+          Gate
+        </Box>
+
         <Stack direction="row" spacing={2} alignItems="center" mb={2}>
           <TextField
             label="Tempo"

@@ -113,7 +113,13 @@ const NodeFrequencyEnvelope = ({ data, id }: NodeFrequencyEnvelopeProps) => {
   }, []);
 
   return (
-    <NodeBox id={id} label={data.label} hasInputHandle={false}>
+    <NodeBox
+      id={id}
+      label={data.label}
+      hasInputHandle={false}
+      hasControl1Handle={true}
+      control1Target={{ label: 'Trigger', property: 'trigger' }}
+    >
       <Box sx={{ mt: 2 }}>
         <Button
           variant="contained"

@@ -105,6 +105,17 @@ export class AudioNodeManager {
           } else {
             console.warn(`Target property ${property} is not a valid AudioParam`);
           }
+
+        } else if (nodeType === 'trigger') {
+          // トリガー接続（Sequencer -> Envelopeなど）
+          // @ts-ignore
+          if (typeof sourceNode.connectTrigger === 'function') {
+            // @ts-ignore
+            sourceNode.connectTrigger(targetNode);
+            console.log('Connected trigger', { source: edge.source, target: nodeId });
+          } else {
+             console.warn('Source node does not support connectTrigger');
+          }
         } else {
           // 通常のオーディオ接続
           sourceNode.connect(targetNode);
