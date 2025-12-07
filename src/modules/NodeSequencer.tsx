@@ -41,10 +41,13 @@ class SequencerNode extends Tone.ToneAudioNode {
   private steps: number;
   private connectedTriggers: any[] = []; // List of connected envelope triggers
 
-  constructor(options: { steps?: number; keys?: string[]; tempo?: number }) {
+  private onStep?: (step: number) => void;
+
+  constructor(options: { steps?: number; keys?: string[]; tempo?: number; onStep?: (step: number) => void }) {
     super();
     this.steps = options.steps || 8;
     this.keys = options.keys || ['A4', 'C4', 'D4', 'E4', 'G4'];
+    this.onStep = options.onStep;
     this.grid = Array(this.keys.length).fill(Array(this.steps).fill(false));
 
     // 出力ノードの初期化
@@ -75,6 +78,12 @@ class SequencerNode extends Tone.ToneAudioNode {
             });
           }
         });
+
+        Tone.Draw.schedule(() => {
+          if (this.onStep) {
+            this.onStep(step);
+          }
+        }, time);
       },
       Array.from({ length: this.steps }, (_, i) => i),
       '4n'
@@ -197,6 +206,7 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   const [grid, setGrid] = useState<boolean[][]>(Array(keys.length).fill(Array(steps).fill(false)));
   const [editingKeyIndex, setEditingKeyIndex] = useState<number | null>(null);
   const [editingKeyValue, setEditingKeyValue] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState<number>(-1);
 
   useEffect(() => {
     // シーケンサーの初期化
@@ -204,6 +214,7 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       steps,
       keys,
       tempo,
+      onStep: (step) => setCurrentStep(step),
     });
 
     // オーディオノードの登録
@@ -318,6 +329,7 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
     } else {
       Tone.Transport.stop();
       sequencer.current?.stop();
+      setCurrentStep(-1);
     }
     setIsPlaying(!isPlaying);
   }, [isPlaying]);
@@ -330,9 +342,9 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
           type="source"
           position={Position.Right}
           id={`${id}-note`}
-          style={{ top: 20, background: 'orange' }}
+          style={{ width: 20, height: 20, background: 'orange', borderStyle: 'none', right: -25, top: 40 }}
         />
-        <Box sx={{ position: 'absolute', right: -10, top: 20, transform: 'translateX(100%)', fontSize: '10px' }}>
+        <Box sx={{ position: 'absolute', right: -55, top: 40, transform: 'translateY(-25%)', fontSize: '10px' }}>
           Note
         </Box>
 
@@ -341,9 +353,9 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
           type="source"
           position={Position.Right}
           id={`${id}-gate`}
-          style={{ top: 50, background: 'red' }}
+          style={{ width: 20, height: 20, background: 'red', borderStyle: 'none', right: -25, top: 80 }}
         />
-        <Box sx={{ position: 'absolute', right: -10, top: 50, transform: 'translateX(100%)', fontSize: '10px' }}>
+        <Box sx={{ position: 'absolute', right: -55, top: 80, transform: 'translateY(-25%)', fontSize: '10px' }}>
           Gate
         </Box>
 
@@ -416,7 +428,22 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
                     key={colIndex}
                     variant={cell ? 'contained' : 'outlined'}
                     onClick={() => handleCellClick(rowIndex, colIndex)}
-                    sx={{ minWidth: '40px', height: '40px' }}
+                    sx={{
+                      minWidth: '40px',
+                      height: '40px',
+                      backgroundColor: colIndex === currentStep ? 'rgba(233, 30, 99, 0.2)' : undefined,
+                      borderColor: colIndex === currentStep ? '#e91e63' : undefined,
+                      '&.MuiButton-contained': {
+                        backgroundColor: cell ? (colIndex === currentStep ? '#c2185b' : 'primary.main') : undefined,
+                        '&:hover': {
+                          backgroundColor: cell ? (colIndex === currentStep ? '#c2185b' : 'primary.dark') : undefined,
+                        }
+                      },
+                      '&.MuiButton-outlined': {
+                        borderColor: colIndex === currentStep ? '#e91e63' : undefined,
+                        color: colIndex === currentStep ? '#e91e63' : undefined,
+                      }
+                    }}
                   />
                 ))}
               </Box>
