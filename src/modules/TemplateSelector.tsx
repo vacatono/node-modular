@@ -48,8 +48,8 @@ export const presetTemplates: FlowTemplate[] = [
       },
     ],
     edges: [
-      { id: 'e1-2', source: 'vco1', target: 'envelope1', data: { targetType: 'audio', sourceType: 'audio' } },
-      { id: 'e2-3', source: 'envelope1', target: 'toDestination', data: { targetType: 'audio', sourceType: 'audio' } },
+      { id: 'e1-2', source: 'vco1', target: 'envelope1', sourceHandle: 'vco1-output-audio', targetHandle: 'envelope1-input-audio', data: { targetType: 'audio', sourceType: 'audio' } },
+      { id: 'e2-3', source: 'envelope1', target: 'toDestination', sourceHandle: 'envelope1-output-audio', targetHandle: 'toDestination-input-audio', data: { targetType: 'audio', sourceType: 'audio' } },
     ],
   },
   {
@@ -158,26 +158,26 @@ export const presetTemplates: FlowTemplate[] = [
         id: 'e-seq-gate-env-trig',
         source: 'seq-1',
         target: 'env-1',
-        sourceHandle: 'seq-1-gate',    // Custom handle ID
-        targetHandle: 'env-1-control1-trigger', // NodeBox ID format
-        data: { targetType: 'trigger', targetProperty: 'trigger' }
+        sourceHandle: 'seq-1-gate-gate',
+        targetHandle: 'env-1-control1-trigger-gate',
+        data: { targetType: 'gate', targetProperty: 'trigger' }
       },
       // Sequencer Input(Note) -> VCO Frequency
       {
         id: 'e-seq-note-vco-freq',
         source: 'seq-1',
         target: 'vco-1',
-        sourceHandle: 'seq-1-note',     // Custom handle ID
-        targetHandle: 'vco-1-control1-frequency', // NodeBox ID format
-        data: { targetType: 'control', targetProperty: 'frequency' }
+        sourceHandle: 'seq-1-note-note',
+        targetHandle: 'vco-1-control2-note-note',
+        data: { targetType: 'note', targetProperty: 'note' }
       },
       // VCO -> Envelope
       {
         id: 'e-vco-env',
         source: 'vco-1',
         target: 'env-1',
-        sourceHandle: 'vco-1-output',
-        targetHandle: 'env-1-input',
+        sourceHandle: 'vco-1-output-audio',
+        targetHandle: 'env-1-input-audio',
         data: { targetType: 'audio' }
       },
       // Envelope -> Output
@@ -185,8 +185,8 @@ export const presetTemplates: FlowTemplate[] = [
         id: 'e-env-out',
         source: 'env-1',
         target: 'out-1',
-        sourceHandle: 'env-1-output',
-        targetHandle: 'out-1-input',
+        sourceHandle: 'env-1-output-audio',
+        targetHandle: 'out-1-input-audio',
         data: { targetType: 'audio' }
       },
     ],

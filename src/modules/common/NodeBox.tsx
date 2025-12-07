@@ -50,16 +50,16 @@ const NodeBox = ({
         <Handle
           type="source"
           position={Position.Right}
-          id={`${id}-output`}
-          style={{ width: 20, height: 20, background: 'red', borderStyle: 'none', right: -10 }}
+          id={`${id}-output-audio`}
+          style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', right: -10 }}
         />
       )}
       {hasInputHandle && (
         <Handle
           type="target"
           position={Position.Left}
-          id={`${id}-input`}
-          style={{ width: 20, height: 20, background: 'blue', borderStyle: 'none', left: -10 }}
+          id={`${id}-input-audio`}
+          style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', left: -10 }}
         />
       )}
       {hasControl1Handle && control1Target && (
@@ -67,9 +67,9 @@ const NodeBox = ({
           key={`${id}-control1-${control1Target.property}`}
           type="target"
           position={Position.Top}
-          id={`${id}-control1-${control1Target.property}`}
+          id={`${id}-control1-${control1Target.property}-${control1Target.property === 'trigger' ? 'gate' : 'cv'}`}
           style={{
-            background: 'lightgreen',
+            background: control1Target.property === 'trigger' ? '#e91e63' : '#4caf50',
             width: 20,
             height: 20,
             top: -10,
@@ -81,9 +81,9 @@ const NodeBox = ({
           key={`${id}-control2-${control2Target.property}`}
           type="target"
           position={Position.Bottom}
-          id={`${id}-control2-${control2Target.property}`}
+          id={`${id}-control2-${control2Target.property}-${control2Target.property === 'note' ? 'note' : 'cv'}`}
           style={{
-            background: 'lightblue',
+            background: control2Target.property === 'note' ? '#ff9800' : '#4caf50',
             borderStyle: 'none',
             width: 20,
             height: 20,

@@ -341,8 +341,8 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
         <Handle
           type="source"
           position={Position.Right}
-          id={`${id}-note`}
-          style={{ width: 20, height: 20, background: 'orange', borderStyle: 'none', right: -25, top: 40 }}
+          id={`${id}-note-note`}
+          style={{ width: 20, height: 20, background: '#ff9800', borderStyle: 'none', right: -25, top: 40 }}
         />
         <Box sx={{ position: 'absolute', right: -55, top: 40, transform: 'translateY(-25%)', fontSize: '10px' }}>
           Note
@@ -352,8 +352,8 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
         <Handle
           type="source"
           position={Position.Right}
-          id={`${id}-gate`}
-          style={{ width: 20, height: 20, background: 'red', borderStyle: 'none', right: -25, top: 80 }}
+          id={`${id}-gate-gate`}
+          style={{ width: 20, height: 20, background: '#e91e63', borderStyle: 'none', right: -25, top: 80 }}
         />
         <Box sx={{ position: 'absolute', right: -55, top: 80, transform: 'translateY(-25%)', fontSize: '10px' }}>
           Gate

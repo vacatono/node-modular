@@ -67,6 +67,9 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
 
   useEffect(() => {
     if (oscillator.current) {
+      // @ts-ignore - Add note as alias to frequency for Note signal connections
+      oscillator.current.note = oscillator.current.frequency;
+
       data.registerAudioNode(id, oscillator.current, {
         frequency: { min: 20, max: 2000 },
         detune: { min: -100, max: 100 },
@@ -110,6 +113,11 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
       control1Target={{
         label: 'Frequency',
         property: 'frequency',
+      }}
+      hasControl2Handle={true}
+      control2Target={{
+        label: 'Note',
+        property: 'note',
       }}
     >
       <Box sx={{ mt: 2 }}>

@@ -70,6 +70,29 @@ const NodeEditor = () => {
     console.log('edges', edges);
   }, [edges]);
 
+  // 接続検証: 同じ信号タイプのみ接続可能
+  const isValidConnection = useCallback((connection: Connection) => {
+    const { sourceHandle, targetHandle } = connection;
+
+    // ハンドルIDから信号タイプを抽出
+    const getSignalType = (handleId: string | null | undefined): string | null => {
+      if (!handleId) return null;
+      const parts = handleId.split('-');
+      return parts[parts.length - 1] || null;
+    };
+
+    const sourceType = getSignalType(sourceHandle);
+    const targetType = getSignalType(targetHandle);
+
+    // 両方のタイプが存在し、一致する場合のみ接続可能
+    if (sourceType && targetType && sourceType === targetType) {
+      return true;
+    }
+
+    console.warn('Invalid connection attempt:', { sourceType, targetType });
+    return false;
+  }, []);
+
   // エッジが追加されたときの処理
   const onConnect = useCallback(
     (params: Connection) => {
@@ -245,6 +268,7 @@ const NodeEditor = () => {
           onNodeClick={onNodeClick}
           onPaneClick={onPaneClick}
           panOnDrag={panOnDrag}
+          isValidConnection={isValidConnection}
         >
           <Background />
           <Controls />
