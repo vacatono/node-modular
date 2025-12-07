@@ -1,5 +1,6 @@
-import { Box, Typography } from '@mui/material';
-import { Handle, Position } from 'reactflow';
+import { Box, Typography, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Handle, Position, useReactFlow } from 'reactflow';
 import { green } from '@mui/material/colors';
 
 interface NodeBoxProps {
@@ -32,6 +33,12 @@ const NodeBox = ({
   control1Target,
   control2Target,
 }: NodeBoxProps) => {
+  const { setNodes } = useReactFlow();
+
+  const handleDelete = () => {
+    setNodes((nodes) => nodes.filter((node) => node.id !== id));
+  };
+
   return (
     <Box
       sx={{
@@ -94,7 +101,12 @@ const NodeBox = ({
           userSelect: 'none',
         }}
       >
-        <Typography variant="subtitle1">{label}</Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="subtitle1">{label}</Typography>
+          <IconButton size="small" onClick={handleDelete} sx={{ color: 'inherit' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </Box>
       {children}
     </Box>
