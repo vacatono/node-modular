@@ -118,7 +118,7 @@ const NodeEditor = () => {
         type,
         position: { x: 100, y: 100 },
         data: {
-          label: type.toUpperCase(),
+          label: type === 'amplitudeEnvelope' ? 'ENVELOPE' : type.toUpperCase(),
           registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode, params?: Record<string, { min: number; max: number }>) => {
             audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
           },
@@ -188,7 +188,7 @@ const NodeEditor = () => {
             Add Oscilloscope
           </Button>
           <Button variant="contained" onClick={() => addNode('amplitudeEnvelope')}>
-            Add Amplitude Envelope
+            Add Envelope
           </Button>
           <Button variant="contained" onClick={() => addNode('frequencyEnvelope')}>
             Add Frequency Envelope

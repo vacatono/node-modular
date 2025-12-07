@@ -31,7 +31,7 @@ export const presetTemplates: FlowTemplate[] = [
         type: 'amplitudeEnvelope',
         position: { x: 300, y: 100 },
         data: {
-          label: 'Envelope',
+          label: 'ENVELOPE',
           attack: 0.1,
           decay: 0.2,
           sustain: 0.5,
@@ -149,7 +149,7 @@ export const presetTemplates: FlowTemplate[] = [
     nodes: [
       { id: 'seq-1', type: 'sequencer', position: { x: 50, y: 50 }, data: { label: 'Sequencer', registerAudioNode: null } },
       { id: 'vco-1', type: 'vco', position: { x: 350, y: 50 }, data: { label: 'VCO', registerAudioNode: null } },
-      { id: 'env-1', type: 'amplitudeEnvelope', position: { x: 350, y: 300 }, data: { label: 'Envelope', registerAudioNode: null } },
+      { id: 'env-1', type: 'amplitudeEnvelope', position: { x: 350, y: 300 }, data: { label: 'ENVELOPE', registerAudioNode: null } },
       { id: 'out-1', type: 'toDestination', position: { x: 650, y: 300 }, data: { label: 'Output', registerAudioNode: null } },
     ],
     edges: [
