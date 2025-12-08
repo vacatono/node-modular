@@ -27,8 +27,8 @@
 
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
-import { Edge } from 'reactflow';
+import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { Edge, Handle, Position } from 'reactflow';
 import * as Tone from 'tone';
 import { Box, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
@@ -89,6 +89,27 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
     }
   }, [id, data.registerAudioNode, data.edges]);
 
+  // CV入力が接続されているかチェック
+  const isFrequencyControlled = useMemo(() => {
+    if (!data.edges) return false;
+    return data.edges.some(edge =>
+      edge.target === id && (
+        edge.data?.targetProperty === 'frequency' ||
+        edge.targetHandle?.includes('frequency')
+      )
+    );
+  }, [data.edges, id]);
+
+  const isQControlled = useMemo(() => {
+    if (!data.edges) return false;
+    return data.edges.some(edge =>
+      edge.target === id && (
+        edge.data?.targetProperty === 'Q' ||
+        edge.targetHandle?.includes('Q')
+      )
+    );
+  }, [data.edges, id]);
+
   // フィルタータイプ変更ハンドラ
   const handleTypeChange = useCallback((event: SelectChangeEvent) => {
     if (filter.current) {
@@ -114,9 +135,63 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
     <NodeBox
       id={id}
       label={data.label}
-      hasControl1Handle={true}
-      control1Target={{ label: 'Cutoff', property: 'frequency' }}
+      hasControl1Handle={false}
+      hasControl2Handle={false}
     >
+      <div style={{ position: 'relative' }}>
+        {/* Custom Handle for Cutoff Frequency (Left Top) */}
+        <Handle
+          type="target"
+          position={Position.Top}
+          id={`${id}-controlCustom-frequency-cv`}
+          style={{
+            background: '#4caf50',
+            width: 20,
+            height: 20,
+            top: -72, // NodeBox padding adjustment
+            left: '25%',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -85, // Label position
+            left: '25%',
+            transform: 'translateX(-50%)',
+            fontSize: '10px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          CV in(cutoff)
+        </Box>
+
+        {/* Custom Handle for Resonance (Right Top) */}
+        <Handle
+          type="target"
+          position={Position.Top}
+          id={`${id}-controlCustom-Q-cv`}
+          style={{
+            background: '#4caf50',
+            width: 20,
+            height: 20,
+            top: -72, // NodeBox padding adjustment
+            left: '75%',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -85, // Label position
+            left: '75%',
+            transform: 'translateX(-50%)',
+            fontSize: '10px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          CV in(res)
+        </Box>
+      </div>
+
       <Box sx={{ mt: 2 }}>
         <FormControl fullWidth>
           <InputLabel>Type</InputLabel>
@@ -130,22 +205,24 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
       </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
-          label="Frequency"
+          label={isFrequencyControlled ? "Frequency (Controlled)" : "Frequency"}
           min={20}
           max={2000}
           step={1}
           defaultValue={data.frequency || 1000}
           onChange={handleFrequencyChange}
+          disabled={isFrequencyControlled}
         />
       </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
-          label="Resonance"
+          label={isQControlled ? "Resonance (Controlled)" : "Resonance"}
           min={0}
           max={20}
           step={0.1}
           defaultValue={data.Q || 1}
           onChange={handleQChange}
+          disabled={isQControlled}
         />
       </Box>
     </NodeBox>
