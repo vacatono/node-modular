@@ -111,6 +111,16 @@ class NoteToCVNode extends Tone.ToneAudioNode {
   }
 
   /**
+   * Noteイベントを受信して入力信号を設定
+   * @param note - ノート名（例: "C4"）または周波数
+   */
+  setNote(note: string | number): void {
+    const frequency = Tone.Frequency(note).toFrequency();
+    this.noteInput.value = frequency;
+    console.log('[DEBUG] NoteToCV received note event:', note, '->', frequency);
+  }
+
+  /**
    * オクターブオフセットを設定
    * @param offset - オクターブオフセット値（-4 ～ +4）
    */

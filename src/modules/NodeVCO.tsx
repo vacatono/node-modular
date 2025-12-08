@@ -132,6 +132,16 @@ class VCONode extends Tone.ToneAudioNode {
   }
 
   /**
+   * Noteイベントを受信して周波数を設定
+   * @param note - ノート名（例: "C4"）または周波数
+   */
+  setNote(note: string | number): void {
+    const frequency = Tone.Frequency(note).toFrequency();
+    this.baseFrequency.value = frequency;
+    console.log('[DEBUG] VCO received note event:', note, '->', frequency);
+  }
+
+  /**
    * CV Inの接続状態を設定
    * CV Inが接続されている場合、ベース周波数を0に設定
    */

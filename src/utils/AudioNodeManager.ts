@@ -229,9 +229,17 @@ export class AudioNodeManager {
 
             if (targetParam && typeof targetParam.connect === 'function') {
               if (targetType === 'note') {
-                // Note信号: 直接接続（周波数値として）
-                actualSourceNode.connect(targetParam);
-                console.log(`Connected Note signal directly to ${targetProperty}`);
+                // Note信号: イベントベース接続を優先
+                // @ts-ignore
+                if (typeof sourceNode.connectNote === 'function') {
+                  // @ts-ignore
+                  sourceNode.connectNote(targetNode);
+                  console.log(`[DEBUG] Connected Note event bus`, { source: edge.source, target: edge.target });
+                } else {
+                  // フォールバック: 直接接続（周波数値として）
+                  actualSourceNode.connect(targetParam);
+                  console.log(`Connected Note signal directly to ${targetProperty}`);
+                }
               } else {
                 // CV信号
                 const targetParams = this.nodeParams.get(edge.target);

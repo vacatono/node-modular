@@ -40,6 +40,7 @@ class SequencerNode extends Tone.ToneAudioNode {
   private keys: string[];
   private steps: number;
   private connectedTriggers: any[] = []; // List of connected envelope triggers
+  private connectedNotes: any[] = []; // List of connected Note event targets
 
   private onStep?: (step: number) => void;
 
@@ -62,9 +63,19 @@ class SequencerNode extends Tone.ToneAudioNode {
             const note = this.keys[rowIndex];
             const frequency = Tone.Frequency(note).toFrequency();
 
-            // ノート出力（周波数値を送信）
-            this.noteOutput.setValueAtTime(frequency, time);
-            console.log('[DEBUG] Sequencer step note:', note, 'freq:', frequency);
+            // ノート出力（周波数値を送信） - 旧シグナル方式（後方互換性のため残すか、完全に切り替えるか）
+            // this.noteOutput.setValueAtTime(frequency, time);
+            // console.log('[DEBUG] Sequencer step note:', note, 'freq:', frequency);
+
+            // Note Event Emission
+            console.log(`[DEBUG] Sequencer emitting note: ${note}. Connected targets: ${this.connectedNotes.length}`);
+            this.connectedNotes.forEach((target, index) => {
+              const hasSetNote = typeof target.setNote === 'function';
+              console.log(`[DEBUG] Target ${index}:`, target.constructor.name, 'hasSetNote:', hasSetNote);
+              if (hasSetNote) {
+                target.setNote(note);
+              }
+            });
 
             // ゲート出力
             this.gateOutput.gain.setValueAtTime(1, time);
@@ -142,8 +153,11 @@ class SequencerNode extends Tone.ToneAudioNode {
   /**
    * ノート出力に接続
    */
-  connectNote(target: Tone.ToneAudioNode): void {
-    this.noteOutput.connect(target);
+  connectNote(target: any): void {
+    if (!this.connectedNotes.includes(target)) {
+      this.connectedNotes.push(target);
+      console.log('[DEBUG] Connected Note event target:', target);
+    }
   }
 
   /**
