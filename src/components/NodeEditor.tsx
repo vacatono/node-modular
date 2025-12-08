@@ -26,7 +26,6 @@ import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/Temp
 import { audioNodeManager } from '../utils/AudioNodeManager';
 import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
-import NodeFrequencyEnvelope from '@/modules/NodeFrequencyEnvelope';
 import NodeSequencer from '@/modules/NodeSequencer';
 
 const debug = true;
@@ -41,7 +40,6 @@ const nodeTypes: NodeTypes = {
   lfo: NodeLFO,
   oscilloscope: NodeOscilloscope,
   amplitudeEnvelope: NodeAmplitudeEnvelope,
-  frequencyEnvelope: NodeFrequencyEnvelope,
   sequencer: NodeSequencer,
 };
 
@@ -98,20 +96,90 @@ const NodeEditor = () => {
     (params: Connection) => {
       console.log('onConnect', params);
 
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            data: {
-              targetType: params.targetHandle?.includes('-control') ? 'control' : 'audio',
-              targetProperty: params.targetHandle?.split('-').pop() ?? undefined,
-              sourceType: params.sourceHandle?.includes('-control') ? 'control' : 'audio',
-              sourceProperty: params.sourceHandle?.split('-').pop() ?? undefined,
-            },
-          },
-          eds
-        )
-      );
+      const newEdge: Edge = {
+        ...params,
+        id: `e${params.source}-${params.target}`,
+        source: params.source!,
+        target: params.target!,
+        data: {
+          targetType: params.targetHandle?.includes('-control') ? 'control' : 'audio',
+          targetProperty: params.targetHandle?.split('-').pop() ?? undefined,
+          sourceType: params.sourceHandle?.includes('-control') ? 'control' : 'audio',
+          sourceProperty: params.sourceHandle?.split('-').pop() ?? undefined,
+        },
+      };
+
+      setEdges((eds) => {
+        const updatedEdges = addEdge(newEdge, eds);
+
+        // 新しい接続を処理するためにAudioNodeManagerを呼び出す
+        const sourceNode = audioNodeManager.getAudioNode(params.source!);
+        const targetNode = audioNodeManager.getAudioNode(params.target!);
+
+        if (sourceNode && targetNode) {
+          // ハンドルIDから信号タイプを抽出
+          const getSignalType = (handleId: string | null | undefined): string | null => {
+            if (!handleId) return null;
+            const parts = handleId.split('-');
+            return parts[parts.length - 1] || null;
+          };
+
+          const sourceType = getSignalType(params.sourceHandle);
+          const targetType = getSignalType(params.targetHandle);
+          const property = newEdge.data.targetProperty;
+
+          console.log('Processing new connection:', {
+            source: params.source,
+            target: params.target,
+            sourceType,
+            targetType,
+            property,
+          });
+
+          // 信号タイプに基づいて接続処理を分岐
+          if (targetType === 'gate') {
+            // Gate信号: トリガー接続
+            // @ts-ignore
+            if (typeof sourceNode.connectTrigger === 'function') {
+              // @ts-ignore
+              sourceNode.connectTrigger(targetNode);
+              console.log('Connected trigger (Gate)', { source: params.source, target: params.target });
+            } else {
+              console.warn('Source node does not support connectTrigger');
+            }
+          } else if (targetType === 'note' || targetType === 'cv') {
+            // Note/CV信号: パラメータへの接続
+            if (!property) {
+              console.warn('No target property specified for CV/Note connection');
+            } else {
+              // @ts-ignore: Dynamic property access
+              const targetParam = targetNode[property];
+
+              if (targetParam && typeof targetParam.connect === 'function') {
+                if (targetType === 'note') {
+                  // Note信号: 直接接続（周波数値として）
+                  sourceNode.connect(targetParam);
+                  console.log(`Connected Note signal directly to ${property}`);
+                } else {
+                  // CV信号: 直接接続
+                  sourceNode.connect(targetParam);
+                  console.log(`Connected CV directly to ${property}`);
+                }
+              } else {
+                console.warn(`Target property ${property} is not a valid AudioParam`);
+              }
+            }
+          } else if (targetType === 'audio') {
+            // Audio信号: 通常のオーディオ接続
+            sourceNode.connect(targetNode);
+            console.log('Connected audio nodes directly');
+          } else {
+            console.warn('Unknown signal type:', { sourceType, targetType });
+          }
+        }
+
+        return updatedEdges;
+      });
     },
     [setEdges]
   );
@@ -212,9 +280,6 @@ const NodeEditor = () => {
           </Button>
           <Button variant="contained" onClick={() => addNode('amplitudeEnvelope')}>
             Add Envelope
-          </Button>
-          <Button variant="contained" onClick={() => addNode('frequencyEnvelope')}>
-            Add Frequency Envelope
           </Button>
           <Button variant="contained" onClick={() => addNode('sequencer')}>
             Add Sequencer
