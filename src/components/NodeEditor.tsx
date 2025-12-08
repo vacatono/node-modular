@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -54,12 +54,30 @@ const NodeEditor = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [panOnDrag, setPanOnDrag] = useState(true);
+  const isApplyingTemplate = useRef(false);
+  const templateEdgesToProcess = useRef<Edge[]>([]);
 
   // オーディオノード登録用のメモ化された関数
   const registerAudioNode = useCallback(
     (nodeId: string, audioNode: Tone.ToneAudioNode, params?: Record<string, { min: number; max: number }>) => {
       console.log('registerAudioNode', nodeId, params);
       audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
+
+      // テンプレート適用中で、まだ処理すべきedgesがある場合
+      if (isApplyingTemplate.current && templateEdgesToProcess.current.length > 0) {
+        // 少し待ってから接続を処理（全ノードの登録を待つ）
+        setTimeout(() => {
+          const edgesToProcess = templateEdgesToProcess.current;
+          if (edgesToProcess.length > 0) {
+            console.log('Processing template edges after node registration:', edgesToProcess.length);
+            edgesToProcess.forEach((edge: Edge) => {
+              processConnection(edge);
+            });
+            templateEdgesToProcess.current = [];
+            isApplyingTemplate.current = false;
+          }
+        }, 200);
+      }
     },
     [edges]
   );
@@ -237,6 +255,79 @@ const NodeEditor = () => {
     setNodes((nds) => nds.map((n) => ({ ...n, draggable: true })));
   }, [setNodes]);
 
+  /**
+   * 接続を処理する共通関数
+   */
+  const processConnection = useCallback((edge: Edge) => {
+    const sourceNode = audioNodeManager.getAudioNode(edge.source);
+    const targetNode = audioNodeManager.getAudioNode(edge.target);
+
+    if (!sourceNode || !targetNode) {
+      console.warn('Source or target node not found for edge:', edge);
+      return;
+    }
+
+    // ハンドルIDから信号タイプを抽出
+    const getSignalType = (handleId: string | null | undefined): string | null => {
+      if (!handleId) return null;
+      const parts = handleId.split('-');
+      return parts[parts.length - 1] || null;
+    };
+
+    const sourceType = getSignalType(edge.sourceHandle);
+    const targetType = getSignalType(edge.targetHandle);
+    const property = edge.data?.targetProperty;
+
+    console.log('Processing connection:', {
+      source: edge.source,
+      target: edge.target,
+      sourceType,
+      targetType,
+      property,
+    });
+
+    // 信号タイプに基づいて接続処理を分岐
+    if (targetType === 'gate') {
+      // Gate信号: トリガー接続
+      // @ts-ignore
+      if (typeof sourceNode.connectTrigger === 'function') {
+        // @ts-ignore
+        sourceNode.connectTrigger(targetNode);
+        console.log('Connected trigger (Gate)', { source: edge.source, target: edge.target });
+      } else {
+        console.warn('Source node does not support connectTrigger');
+      }
+    } else if (targetType === 'note' || targetType === 'cv') {
+      // Note/CV信号: パラメータへの接続
+      if (!property) {
+        console.warn('No target property specified for CV/Note connection');
+      } else {
+        // @ts-ignore: Dynamic property access
+        const targetParam = targetNode[property];
+
+        if (targetParam && typeof targetParam.connect === 'function') {
+          if (targetType === 'note') {
+            // Note信号: 直接接続（周波数値として）
+            sourceNode.connect(targetParam);
+            console.log(`Connected Note signal directly to ${property}`);
+          } else {
+            // CV信号: 直接接続
+            sourceNode.connect(targetParam);
+            console.log(`Connected CV directly to ${property}`);
+          }
+        } else {
+          console.warn(`Target property ${property} is not a valid AudioParam`);
+        }
+      }
+    } else if (targetType === 'audio') {
+      // Audio信号: 通常のオーディオ接続
+      sourceNode.connect(targetNode);
+      console.log('Connected audio nodes directly');
+    } else {
+      console.warn('Unknown signal type:', { sourceType, targetType });
+    }
+  }, []);
+
   // ノードの色を選択状態で変える
   const getNodeStyle = (node: Node) => ({
     border: selectedNodeId === node.id ? '2px solid #1976d2' : '1px solid #ccc',
@@ -250,6 +341,10 @@ const NodeEditor = () => {
    */
   const handleApplyTemplate = useCallback(
     (template: FlowTemplate) => {
+      // テンプレート適用時にフラグを設定
+      isApplyingTemplate.current = true;
+      templateEdgesToProcess.current = template.edges;
+
       setNodes(template.nodes);
       setEdges(template.edges);
     },

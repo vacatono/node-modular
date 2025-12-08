@@ -54,19 +54,13 @@ const onConnect = useCallback(
 
 ### Test 1: Manual Connection
 
-![After Connections](file:///C:/Users/vacat/.gemini/antigravity/brain/2ed6d22b-7983-4475-a981-1a7a1d93481c/after_connections_1765152558409.png)
-
 手動で接続を作成したテスト。Sequencerを追加し、Gate→Envelope Trigger、VCO→Envelope、Envelope→Outputの接続を作成しました。
 
 **結果**: コンソールログに「Processing new connection」と「Connected trigger (Gate)」のメッセージが表示され、接続処理が動作していることを確認しました。
 
-![After Start](file:///C:/Users/vacat/.gemini/antigravity/brain/2ed6d22b-7983-4475-a981-1a7a1d93481c/after_start_1765152715132.png)
-
 Sequencerを開始した後の状態。Sequencerは動作していますが（ステップインジケーターが動いている）、音が出ていません。
 
 ### Test 2: Template Loading
-
-![Template Loaded](file:///C:/Users/vacat/.gemini/antigravity/brain/2ed6d22b-7983-4475-a981-1a7a1d93481c/template_loaded_1765152860305.png)
 
 「Sequencer Test」テンプレートを読み込んだ状態。
 
@@ -84,13 +78,91 @@ Sequencerを開始した後の状態。Sequencerは動作していますが（�
 2. **useEffect でedges変更を監視**: edgesが変更されたときに、新しいedgesを処理する
 3. **AudioNodeManagerの登録タイミングを変更**: ノード登録時に現在のedgesを参照するのではなく、edges変更時に再接続する
 
-## Browser Test Recordings
+## Final Implementation
 
-- [Initial State Check](file:///C:/Users/vacat/.gemini/antigravity/brain/2ed6d22b-7983-4475-a981-1a7a1d93481c/localhost_3000_open_1765150572375.webp)
-- [Manual Connection Test](file:///C:/Users/vacat/.gemini/antigravity/brain/2ed6d22b-7983-4475-a981-1a7a1d93481c/test_gate_connection_1765152520813.webp)
-- [Fixed Connection Test](file:///C:/Users/vacat/.gemini/antigravity/brain/2ed6d22b-7983-4475-a981-1a7a1d93481c/test_fixed_connection_1765152667412.webp)
-- [Template Test](file:///C:/Users/vacat/.gemini/antigravity/brain/2ed6d22b-7983-4475-a981-1a7a1d93481c/test_with_template_1765152759429.webp)
+### Flag-Based Template Connection Processing
 
-## Next Steps
+**実装方法**: `handleApplyTemplate`でフラグを設定し、`registerAudioNode`内でテンプレートedgesを処理する方式を採用しました。
 
-テンプレート読み込み時の接続処理を実装する必要があります。最も簡単な方法は、`handleApplyTemplate`関数内で、テンプレート適用後に全てのedgesを処理することです。
+**変更内容**:
+
+1. **フラグとRefの追加** ([NodeEditor.tsx](file:///e:/VSCodeソース/node-modular/src/components/NodeEditor.tsx#L57-L58)):
+   ```typescript
+   const isApplyingTemplate = useRef(false);
+   const templateEdgesToProcess = useRef<Edge[]>([]);
+   ```
+
+2. **handleApplyTemplateの修正** ([NodeEditor.tsx](file:///e:/VSCodeソース/node-modular/src/components/NodeEditor.tsx#L342-L351)):
+   ```typescript
+   const handleApplyTemplate = useCallback(
+     (template: FlowTemplate) => {
+       // テンプレート適用時にフラグを設定
+       isApplyingTemplate.current = true;
+       templateEdgesToProcess.current = template.edges;
+       
+       setNodes(template.nodes);
+       setEdges(template.edges);
+     },
+     [setNodes, setEdges]
+   );
+   ```
+
+3. **registerAudioNodeでの接続処理** ([NodeEditor.tsx](file:///e:/VSCodeソース/node-modular/src/components/NodeEditor.tsx#L63-L78)):
+   ```typescript
+   const registerAudioNode = useCallback(
+     (nodeId: string, audioNode: Tone.ToneAudioNode, params?) => {
+       console.log('registerAudioNode', nodeId, params);
+       audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
+       
+       // テンプレート適用中で、まだ処理すべきedgesがある場合
+       if (isApplyingTemplate.current && templateEdgesToProcess.current.length > 0) {
+         setTimeout(() => {
+           const edgesToProcess = templateEdgesToProcess.current;
+           if (edgesToProcess.length > 0) {
+             console.log('Processing template edges after node registration:', edgesToProcess.length);
+             edgesToProcess.forEach((edge: Edge) => {
+               processConnection(edge);
+             });
+             templateEdgesToProcess.current = [];
+             isApplyingTemplate.current = false;
+           }
+         }, 200);
+       }
+     },
+     [edges]
+   );
+   ```
+
+4. **processConnection共通関数** ([NodeEditor.tsx](file:///e:/VSCodeソース/node-modular/src/components/NodeEditor.tsx#L258-L327)):
+   - Gate、Note、CV、Audio信号タイプごとの接続処理ロジックを共通化
+   - `onConnect`と`registerAudioNode`の両方から使用可能
+
+### 動作原理
+
+1. ユーザーがテンプレートを選択して「Apply Template」をクリック
+2. `handleApplyTemplate`がフラグを設定し、処理すべきedgesを保存
+3. `setNodes`と`setEdges`でテンプレートを適用
+4. 各ノードが初期化され、`registerAudioNode`が呼び出される
+5. 最後のノードが登録されたときに、`registerAudioNode`内のsetTimeoutが発火
+6. 全てのテンプレートedgesが`processConnection`で処理される
+7. Gate接続の場合、`sourceNode.connectTrigger(targetNode)`が呼び出される
+
+### 検証が必要
+
+ブラウザサブエージェントがテンプレート選択で問題に遭遇したため、手動での検証が必要です:
+
+1. http://localhost:3000 を開く
+2. TEMPLATESドロップダウンから「Sequencer Test」を選択
+3. 「Apply Template」をクリック
+4. コンソールで「Processing template edges after node registration」と「Connected trigger (Gate)」のメッセージを確認
+5. Sequencerの「Start」ボタンをクリック
+6. 音が出るか、Envelopeがトリガーされるかを確認
+
+## Summary
+
+- NodeFrequencyEnvelopeを削除
+- NodeEditorの`onConnect`を修正して、手動接続時に即座に接続処理を実行
+- テンプレート適用時の接続処理をフラグベースのアプローチで実装
+- `processConnection`共通関数を作成して、コードの重複を削減
+
+手動接続では「Connected trigger (Gate)」のログが確認できましたが、実際に音が出るかは手動検証が必要です。
