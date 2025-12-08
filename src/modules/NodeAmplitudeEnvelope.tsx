@@ -30,6 +30,13 @@ const NodeAmplitudeEnvelope = ({ data, id }: NodeAmplitudeEnvelopeProps) => {
       release: data.release || 0.3,
     });
 
+    console.log('[DEBUG] AmplitudeEnvelope created:', {
+      envelope: envelope.current,
+      hasTriggerAttackRelease: typeof envelope.current?.triggerAttackRelease === 'function',
+      hasTriggerAttack: typeof envelope.current?.triggerAttack === 'function',
+      hasTriggerRelease: typeof envelope.current?.triggerRelease === 'function',
+    });
+
     data.registerAudioNode(id, envelope.current);
 
     return () => {

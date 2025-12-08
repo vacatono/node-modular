@@ -70,10 +70,18 @@ class SequencerNode extends Tone.ToneAudioNode {
             this.gateOutput.gain.setValueAtTime(0, time + 0.1);
 
             // トリガー接続（Envelope等をトリガー）
-            this.connectedTriggers.forEach(target => {
+            console.log('[DEBUG] Sequencer step - connectedTriggers count:', this.connectedTriggers.length);
+            this.connectedTriggers.forEach((target, index) => {
+              console.log(`[DEBUG] Trigger ${index}:`, {
+                target: target,
+                hasTriggerAttackRelease: typeof target?.triggerAttackRelease === 'function',
+              });
               if (target && typeof target.triggerAttackRelease === 'function') {
                 // 16分音符分の長さでトリガー
                 target.triggerAttackRelease("16n", time);
+                console.log(`[DEBUG] triggerAttackRelease called on target ${index}`);
+              } else {
+                console.warn(`[DEBUG] Target ${index} does not have triggerAttackRelease method`);
               }
             });
           }
@@ -135,8 +143,17 @@ class SequencerNode extends Tone.ToneAudioNode {
    * AudioNodeManagerから呼び出される
    */
   connectTrigger(target: any): void {
+    console.log('[DEBUG] SequencerNode.connectTrigger called:', {
+      target: target,
+      targetType: target?.constructor?.name,
+      hasTriggerAttackRelease: typeof target?.triggerAttackRelease === 'function',
+      currentTriggers: this.connectedTriggers.length,
+    });
     if (!this.connectedTriggers.includes(target)) {
       this.connectedTriggers.push(target);
+      console.log('[DEBUG] Target added to connectedTriggers. New count:', this.connectedTriggers.length);
+    } else {
+      console.log('[DEBUG] Target already in connectedTriggers');
     }
   }
 
@@ -159,7 +176,10 @@ class SequencerNode extends Tone.ToneAudioNode {
    * シーケンスの開始
    */
   start(): void {
+    console.log('[DEBUG] SequencerNode.start() called');
+    console.log('[DEBUG] connectedTriggers count:', this.connectedTriggers.length);
     this.sequence.start(0);
+    console.log('[DEBUG] sequence.start() called');
   }
 
   /**
@@ -209,6 +229,14 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   const [currentStep, setCurrentStep] = useState<number>(-1);
 
   useEffect(() => {
+    console.log('[DEBUG] NodeSequencer useEffect - creating new instance:', {
+      id,
+      steps,
+      keysLength: keys.length,
+      tempo,
+      edgesCount: data.edges?.length || 0,
+    });
+    
     // シーケンサーの初期化
     sequencer.current = new SequencerNode({
       steps,
@@ -217,10 +245,13 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       onStep: (step) => setCurrentStep(step),
     });
 
+    console.log('[DEBUG] NodeSequencer - new instance created, connectedTriggers:', sequencer.current.connectedTriggers.length);
+
     // オーディオノードの登録
     data.registerAudioNode(id, sequencer.current);
 
     return () => {
+      console.log('[DEBUG] NodeSequencer useEffect cleanup - disposing instance');
       sequencer.current?.dispose();
     };
   }, [id, steps, keys, tempo, data.registerAudioNode]);
@@ -323,10 +354,15 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   // 再生/停止ハンドラ
   const handlePlayToggle = useCallback(async () => {
     if (!isPlaying) {
+      console.log('[DEBUG] Starting sequencer...');
       await Tone.start();
+      console.log('[DEBUG] Tone.start() completed');
       Tone.Transport.start();
+      console.log('[DEBUG] Tone.Transport.start() called');
       sequencer.current?.start();
+      console.log('[DEBUG] sequencer.start() called');
     } else {
+      console.log('[DEBUG] Stopping sequencer...');
       Tone.Transport.stop();
       sequencer.current?.stop();
       setCurrentStep(-1);
@@ -345,7 +381,7 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
           style={{ width: 20, height: 20, background: '#ff9800', borderStyle: 'none', right: -25, top: 40 }}
         />
         <Box sx={{ position: 'absolute', right: -55, top: 40, transform: 'translateY(-25%)', fontSize: '10px' }}>
-          Note
+          Note Out
         </Box>
 
         {/* Gate Output Handle */}
@@ -356,7 +392,7 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
           style={{ width: 20, height: 20, background: '#e91e63', borderStyle: 'none', right: -25, top: 80 }}
         />
         <Box sx={{ position: 'absolute', right: -55, top: 80, transform: 'translateY(-25%)', fontSize: '10px' }}>
-          Gate
+          Gate Out
         </Box>
 
         <Stack direction="row" spacing={2} alignItems="center" mb={2}>

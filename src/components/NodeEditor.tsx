@@ -59,208 +59,6 @@ const NodeEditor = () => {
   const isApplyingTemplate = useRef(false);
   const templateEdgesToProcess = useRef<Edge[]>([]);
 
-  // オーディオノード登録用のメモ化された関数
-  const registerAudioNode = useCallback(
-    (nodeId: string, audioNode: Tone.ToneAudioNode, params?: Record<string, { min: number; max: number }>) => {
-      console.log('registerAudioNode', nodeId, params);
-      audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
-
-      // テンプレート適用中で、まだ処理すべきedgesがある場合
-      if (isApplyingTemplate.current && templateEdgesToProcess.current.length > 0) {
-        // 少し待ってから接続を処理（全ノードの登録を待つ）
-        setTimeout(() => {
-          const edgesToProcess = templateEdgesToProcess.current;
-          if (edgesToProcess.length > 0) {
-            console.log('Processing template edges after node registration:', edgesToProcess.length);
-            edgesToProcess.forEach((edge: Edge) => {
-              processConnection(edge);
-            });
-            templateEdgesToProcess.current = [];
-            isApplyingTemplate.current = false;
-          }
-        }, 200);
-      }
-    },
-    [edges]
-  );
-
-  useEffect(() => {
-    console.log('edges', edges);
-  }, [edges]);
-
-  // 接続検証: 同じ信号タイプのみ接続可能
-  const isValidConnection = useCallback((connection: Connection) => {
-    const { sourceHandle, targetHandle } = connection;
-
-    // ハンドルIDから信号タイプを抽出
-    const getSignalType = (handleId: string | null | undefined): string | null => {
-      if (!handleId) return null;
-      const parts = handleId.split('-');
-      return parts[parts.length - 1] || null;
-    };
-
-    const sourceType = getSignalType(sourceHandle);
-    const targetType = getSignalType(targetHandle);
-
-    // 両方のタイプが存在し、一致する場合のみ接続可能
-    if (sourceType && targetType && sourceType === targetType) {
-      return true;
-    }
-
-    console.warn('Invalid connection attempt:', { sourceType, targetType });
-    return false;
-  }, []);
-
-  // エッジが追加されたときの処理
-  const onConnect = useCallback(
-    (params: Connection) => {
-      console.log('onConnect', params);
-
-      const newEdge: Edge = {
-        ...params,
-        id: `e${params.source}-${params.target}`,
-        source: params.source!,
-        target: params.target!,
-        data: {
-          targetType: params.targetHandle?.includes('-control') ? 'control' : 'audio',
-          targetProperty: params.targetHandle?.split('-').pop() ?? undefined,
-          sourceType: params.sourceHandle?.includes('-control') ? 'control' : 'audio',
-          sourceProperty: params.sourceHandle?.split('-').pop() ?? undefined,
-        },
-      };
-
-      setEdges((eds) => {
-        const updatedEdges = addEdge(newEdge, eds);
-
-        // 新しい接続を処理するためにAudioNodeManagerを呼び出す
-        const sourceNode = audioNodeManager.getAudioNode(params.source!);
-        const targetNode = audioNodeManager.getAudioNode(params.target!);
-
-        if (sourceNode && targetNode) {
-          // ハンドルIDから信号タイプを抽出
-          const getSignalType = (handleId: string | null | undefined): string | null => {
-            if (!handleId) return null;
-            const parts = handleId.split('-');
-            return parts[parts.length - 1] || null;
-          };
-
-          const sourceType = getSignalType(params.sourceHandle);
-          const targetType = getSignalType(params.targetHandle);
-          const property = newEdge.data.targetProperty;
-
-          console.log('Processing new connection:', {
-            source: params.source,
-            target: params.target,
-            sourceType,
-            targetType,
-            property,
-          });
-
-          // 信号タイプに基づいて接続処理を分岐
-          if (targetType === 'gate') {
-            // Gate信号: トリガー接続
-            // @ts-ignore
-            if (typeof sourceNode.connectTrigger === 'function') {
-              // @ts-ignore
-              sourceNode.connectTrigger(targetNode);
-              console.log('Connected trigger (Gate)', { source: params.source, target: params.target });
-            } else {
-              console.warn('Source node does not support connectTrigger');
-            }
-          } else if (targetType === 'note' || targetType === 'cv') {
-            // Note/CV信号: パラメータへの接続
-            if (!property) {
-              console.warn('No target property specified for CV/Note connection');
-            } else {
-              // @ts-ignore: Dynamic property access
-              const targetParam = targetNode[property];
-
-              if (targetParam && typeof targetParam.connect === 'function') {
-                if (targetType === 'note') {
-                  // Note信号: 直接接続（周波数値として）
-                  sourceNode.connect(targetParam);
-                  console.log(`Connected Note signal directly to ${property}`);
-                } else {
-                  // CV信号: 直接接続
-                  sourceNode.connect(targetParam);
-                  console.log(`Connected CV directly to ${property}`);
-                }
-              } else {
-                console.warn(`Target property ${property} is not a valid AudioParam`);
-              }
-            }
-          } else if (targetType === 'audio') {
-            // Audio信号: 通常のオーディオ接続
-            sourceNode.connect(targetNode);
-            console.log('Connected audio nodes directly');
-          } else {
-            console.warn('Unknown signal type:', { sourceType, targetType });
-          }
-        }
-
-        return updatedEdges;
-      });
-    },
-    [setEdges]
-  );
-
-  // エッジが削除されたときの処理
-  const onEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
-    edgesToDelete.forEach((edge) => {
-      const sourceNode = audioNodeManager.getAudioNode(edge.source);
-      if (sourceNode) {
-        sourceNode.disconnect();
-      }
-    });
-  }, []);
-
-  // ノードが削除されたときの処理
-  const onNodesDelete = useCallback((nodesToDelete: Node[]) => {
-    nodesToDelete.forEach((node) => {
-      audioNodeManager.deleteAudioNode(node.id);
-    });
-  }, []);
-
-  // ノードを追加する関数
-  const addNode = useCallback(
-    (type: string) => {
-      const newNode: Node = {
-        id: `${type}-${Date.now()}`,
-        type,
-        position: { x: 100, y: 100 },
-        data: {
-          label: type === 'amplitudeEnvelope' ? 'ENVELOPE' : type.toUpperCase(),
-          registerAudioNode: (
-            nodeId: string,
-            audioNode: Tone.ToneAudioNode,
-            params?: Record<string, { min: number; max: number }>
-          ) => {
-            audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
-          },
-        },
-      };
-      setNodes((nds) => [...nds, newNode]);
-    },
-    [setNodes, edges]
-  );
-
-  // ノードクリック時のハンドラ
-  const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      setSelectedNodeId(node.id);
-      setPanOnDrag(false);
-      setNodes((nds) => nds.map((n) => (n.id === node.id ? { ...n, draggable: false } : { ...n, draggable: true })));
-    },
-    [setNodes]
-  );
-
-  // ノード外クリック時のハンドラ
-  const onPaneClick = useCallback(() => {
-    setSelectedNodeId(null);
-    setPanOnDrag(true);
-    setNodes((nds) => nds.map((n) => ({ ...n, draggable: true })));
-  }, [setNodes]);
-
   /**
    * 接続を処理する共通関数
    */
@@ -333,6 +131,279 @@ const NodeEditor = () => {
       console.warn('Unknown signal type:', { sourceType, targetType });
     }
   }, []);
+
+  // オーディオノード登録用のメモ化された関数
+  const registerAudioNode = useCallback(
+    (nodeId: string, audioNode: Tone.ToneAudioNode, params?: Record<string, { min: number; max: number }>) => {
+      console.log('registerAudioNode', nodeId, params);
+      audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
+
+      // テンプレート適用中で、まだ処理すべきedgesがある場合
+      if (isApplyingTemplate.current && templateEdgesToProcess.current.length > 0) {
+        // 少し待ってから接続を処理（全ノードの登録を待つ）
+        setTimeout(() => {
+          const edgesToProcess = templateEdgesToProcess.current;
+          if (edgesToProcess.length > 0) {
+            console.log('Processing template edges after node registration:', edgesToProcess.length);
+            edgesToProcess.forEach((edge: Edge) => {
+              processConnection(edge);
+            });
+            templateEdgesToProcess.current = [];
+            isApplyingTemplate.current = false;
+          }
+        }, 200);
+      }
+    },
+    [edges, processConnection]
+  );
+
+  useEffect(() => {
+    console.log('edges', edges);
+  }, [edges]);
+
+  // 接続検証: 同じ信号タイプのみ接続可能
+  const isValidConnection = useCallback((connection: Connection) => {
+    const { sourceHandle, targetHandle } = connection;
+
+    // ハンドルIDから信号タイプを抽出
+    const getSignalType = (handleId: string | null | undefined): string | null => {
+      if (!handleId) return null;
+      const parts = handleId.split('-');
+      return parts[parts.length - 1] || null;
+    };
+
+    const sourceType = getSignalType(sourceHandle);
+    const targetType = getSignalType(targetHandle);
+
+    // 両方のタイプが存在し、一致する場合のみ接続可能
+    if (sourceType && targetType && sourceType === targetType) {
+      return true;
+    }
+
+    console.warn('Invalid connection attempt:', { sourceType, targetType });
+    return false;
+  }, []);
+
+  // エッジが追加されたときの処理
+  const onConnect = useCallback(
+    (params: Connection) => {
+      console.log('onConnect', params);
+
+      // ハンドルIDからtargetPropertyを抽出する関数
+      const extractProperty = (handleId: string | null | undefined): string | undefined => {
+        if (!handleId) return undefined;
+        const parts = handleId.split('-');
+        console.log('[DEBUG] extractProperty - handleId:', handleId, 'parts:', parts);
+        // control1, control2, control3の次の部分がproperty
+        const controlIndex = parts.findIndex(part => part.startsWith('control'));
+        console.log('[DEBUG] extractProperty - controlIndex:', controlIndex);
+        if (controlIndex >= 0 && controlIndex + 1 < parts.length) {
+          const property = parts[controlIndex + 1];
+          console.log('[DEBUG] extractProperty - extracted property:', property);
+          return property;
+        }
+        // controlがない場合は最後の部分（後方互換性のため）
+        const fallback = parts[parts.length - 1];
+        console.log('[DEBUG] extractProperty - fallback:', fallback);
+        return fallback;
+      };
+
+      // ハンドルIDから信号タイプを抽出する関数
+      const getSignalType = (handleId: string | null | undefined): string | null => {
+        if (!handleId) return null;
+        const parts = handleId.split('-');
+        // 最後の部分が信号タイプ（gate, note, cv, audio）
+        return parts[parts.length - 1] || null;
+      };
+
+      const targetType = getSignalType(params.targetHandle);
+      const sourceType = getSignalType(params.sourceHandle);
+
+      const newEdge: Edge = {
+        ...params,
+        id: `e${params.source}-${params.target}`,
+        source: params.source!,
+        target: params.target!,
+        data: {
+          targetType: targetType || 'audio',
+          targetProperty: extractProperty(params.targetHandle),
+          sourceType: sourceType || 'audio',
+          sourceProperty: extractProperty(params.sourceHandle),
+        },
+      };
+
+      setEdges((eds) => {
+        const updatedEdges = addEdge(newEdge, eds);
+
+        // 新しい接続を処理するためにAudioNodeManagerを呼び出す
+        const sourceNode = audioNodeManager.getAudioNode(params.source!);
+        const targetNode = audioNodeManager.getAudioNode(params.target!);
+
+        console.log('[DEBUG] onConnect - checking nodes:', {
+          source: params.source,
+          target: params.target,
+          sourceNodeExists: !!sourceNode,
+          targetNodeExists: !!targetNode,
+        });
+
+        if (sourceNode && targetNode) {
+          // 上で定義したtargetTypeとsourceTypeを使用
+          const property = newEdge.data.targetProperty;
+
+          console.log('Processing new connection:', {
+            source: params.source,
+            target: params.target,
+            sourceType,
+            targetType,
+            property,
+          });
+
+          // 信号タイプに基づいて接続処理を分岐
+          if (targetType === 'gate') {
+            // Gate信号: トリガー接続
+            console.log('[DEBUG] Gate connection detected:', {
+              sourceNode: sourceNode,
+              targetNode: targetNode,
+              hasConnectTrigger: typeof (sourceNode as any).connectTrigger === 'function',
+            });
+            // @ts-ignore
+            if (typeof sourceNode.connectTrigger === 'function') {
+              // @ts-ignore
+              sourceNode.connectTrigger(targetNode);
+              console.log('[DEBUG] connectTrigger called successfully');
+              // @ts-ignore
+              if (sourceNode.connectedTriggers) {
+                // @ts-ignore
+                console.log('[DEBUG] connectedTriggers array:', sourceNode.connectedTriggers);
+              }
+              console.log('Connected trigger (Gate)', { source: params.source, target: params.target });
+            } else {
+              console.warn('Source node does not support connectTrigger', {
+                sourceNodeType: sourceNode.constructor.name,
+                sourceNode: sourceNode,
+              });
+            }
+          } else if (targetType === 'note' || targetType === 'cv') {
+            // Note/CV信号: パラメータへの接続
+            if (!property) {
+              console.warn('No target property specified for CV/Note connection');
+            } else {
+              // @ts-ignore: Dynamic property access
+              const targetParam = targetNode[property];
+
+              if (targetParam && typeof targetParam.connect === 'function') {
+                if (targetType === 'note') {
+                  // Note信号: 直接接続（周波数値として）
+                  sourceNode.connect(targetParam);
+                  console.log(`Connected Note signal directly to ${property}`);
+                } else {
+                  // CV信号: 直接接続
+                  sourceNode.connect(targetParam);
+                  console.log(`Connected CV directly to ${property}`);
+                }
+              } else {
+                console.warn(`Target property ${property} is not a valid AudioParam`);
+              }
+            }
+          } else if (targetType === 'audio') {
+            // Audio信号: 通常のオーディオ接続
+            sourceNode.connect(targetNode);
+            console.log('Connected audio nodes directly');
+          } else {
+            console.warn('Unknown signal type:', { sourceType, targetType });
+          }
+        } else {
+          // ノードが存在しない場合、registerAudioNodeで再接続される
+          console.log('[DEBUG] Nodes not yet registered, connection will be established when nodes are registered');
+        }
+
+        return updatedEdges;
+      });
+
+      // エッジが更新された後、関連するノードを再登録して接続を確立
+      // 特にSequencerNodeなど、再レンダリング時に接続が失われる可能性があるノード
+      // setEdgesのコールバック内で処理するため、最新のedgesが利用可能
+      const currentTargetType = targetType;
+      const currentSource = params.source!;
+      const currentTarget = params.target!;
+
+      // エッジが更新された後、最新のedgesでソースノードを再登録
+      setTimeout(() => {
+        const sourceNode = audioNodeManager.getAudioNode(currentSource);
+        const targetNode = audioNodeManager.getAudioNode(currentTarget);
+
+        if (sourceNode && targetNode && currentTargetType === 'gate') {
+          // Gate接続の場合、ソースノードを再登録して接続を確立
+          console.log('[DEBUG] Re-registering source node to establish connection:', currentSource);
+          // 直接接続を確立（registerAudioNodeは次のレンダリング時に呼ばれる）
+          // @ts-ignore
+          if (typeof sourceNode.connectTrigger === 'function') {
+            // @ts-ignore
+            sourceNode.connectTrigger(targetNode);
+            console.log('[DEBUG] connectTrigger called after edge update');
+          }
+        }
+      }, 100);
+    },
+    [setEdges]
+  );
+
+  // エッジが削除されたときの処理
+  const onEdgesDelete = useCallback((edgesToDelete: Edge[]) => {
+    edgesToDelete.forEach((edge) => {
+      const sourceNode = audioNodeManager.getAudioNode(edge.source);
+      if (sourceNode) {
+        sourceNode.disconnect();
+      }
+    });
+  }, []);
+
+  // ノードが削除されたときの処理
+  const onNodesDelete = useCallback((nodesToDelete: Node[]) => {
+    nodesToDelete.forEach((node) => {
+      audioNodeManager.deleteAudioNode(node.id);
+    });
+  }, []);
+
+  // ノードを追加する関数
+  const addNode = useCallback(
+    (type: string) => {
+      const newNode: Node = {
+        id: `${type}-${Date.now()}`,
+        type,
+        position: { x: 100, y: 100 },
+        data: {
+          label: type === 'amplitudeEnvelope' ? 'ENVELOPE' : type.toUpperCase(),
+          registerAudioNode: (
+            nodeId: string,
+            audioNode: Tone.ToneAudioNode,
+            params?: Record<string, { min: number; max: number }>
+          ) => {
+            audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
+          },
+        },
+      };
+      setNodes((nds) => [...nds, newNode]);
+    },
+    [setNodes, edges]
+  );
+
+  // ノードクリック時のハンドラ
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      setSelectedNodeId(node.id);
+      setPanOnDrag(false);
+      setNodes((nds) => nds.map((n) => (n.id === node.id ? { ...n, draggable: false } : { ...n, draggable: true })));
+    },
+    [setNodes]
+  );
+
+  // ノード外クリック時のハンドラ
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+    setPanOnDrag(true);
+    setNodes((nds) => nds.map((n) => ({ ...n, draggable: true })));
+  }, [setNodes]);
 
   // ノードの色を選択状態で変える
   const getNodeStyle = (node: Node) => ({

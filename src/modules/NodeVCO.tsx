@@ -28,6 +28,111 @@ import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
 import { Edge } from 'reactflow';
 
+/**
+ * VCOノードのラッパークラス
+ * Tone.OscillatorをラップしてToneAudioNodeとして機能させます
+ */
+class VCONode extends Tone.ToneAudioNode {
+  private oscillator: Tone.Oscillator;
+
+  constructor(options: { frequency?: number; type?: Tone.ToneOscillatorType }) {
+    super();
+    this.oscillator = new Tone.Oscillator(options.frequency || 440, options.type || 'sine');
+    
+    // @ts-ignore - Add note as alias to frequency for Note signal connections
+    this.oscillator.note = this.oscillator.frequency;
+  }
+
+  /**
+   * ノードの名前
+   */
+  get name(): string {
+    return 'VCONode';
+  }
+
+  /**
+   * 入力ノード
+   */
+  get input(): Tone.ToneAudioNode {
+    return this.oscillator;
+  }
+
+  /**
+   * 出力ノード
+   */
+  get output(): Tone.ToneAudioNode {
+    return this.oscillator;
+  }
+
+  /**
+   * 周波数パラメータへのアクセス
+   */
+  get frequency(): Tone.Signal<'frequency'> {
+    return this.oscillator.frequency;
+  }
+
+  /**
+   * Noteパラメータへのアクセス（frequencyのエイリアス）
+   */
+  get note(): Tone.Signal<'frequency'> {
+    return this.oscillator.frequency;
+  }
+
+  /**
+   * 波形タイプ
+   */
+  get type(): Tone.ToneOscillatorType {
+    return this.oscillator.type;
+  }
+
+  set type(value: Tone.ToneOscillatorType) {
+    this.oscillator.type = value;
+  }
+
+  /**
+   * triggerAttackReleaseメソッド（現在は未使用、将来の拡張用）
+   */
+  triggerAttackRelease(duration: string | number, time?: Tone.Unit.Time): this {
+    const startTime = time || Tone.now();
+    const durationValue = typeof duration === 'string' ? Tone.Time(duration).toSeconds() : duration;
+    
+    // オシレーターを開始
+    if (this.oscillator.state !== 'started') {
+      this.oscillator.start(startTime);
+    }
+    
+    // 指定時間後に停止
+    this.oscillator.stop(startTime + durationValue);
+    
+    return this;
+  }
+
+  /**
+   * オシレーターの開始
+   */
+  start(time?: Tone.Unit.Time): this {
+    this.oscillator.start(time);
+    return this;
+  }
+
+  /**
+   * オシレーターの停止
+   */
+  stop(time?: Tone.Unit.Time): this {
+    this.oscillator.stop(time);
+    return this;
+  }
+
+  /**
+   * リソースの解放
+   */
+  dispose(): this {
+    this.oscillator.dispose();
+    super.dispose();
+    return this;
+  }
+}
+
 interface NodeVCOProps {
   /** ノードの一意の識別子 */
   id: string;
@@ -53,24 +158,24 @@ interface NodeVCOProps {
  * @returns NodeVCOコンポーネント
  */
 const NodeVCO = ({ data, id }: NodeVCOProps) => {
-  const oscillator = useRef<Tone.Oscillator | null>(null);
+  const vcoNode = useRef<VCONode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     //console.log('NodeVCO useEffect', data);
-    oscillator.current = new Tone.Oscillator(data.frequency || 440, data.type || 'sine');
+    vcoNode.current = new VCONode({
+      frequency: data.frequency || 440,
+      type: data.type || 'sine',
+    });
     return () => {
-      oscillator.current?.stop();
-      oscillator.current?.dispose();
+      vcoNode.current?.stop();
+      vcoNode.current?.dispose();
     };
   }, [id, data.frequency, data.type]);
 
   useEffect(() => {
-    if (oscillator.current) {
-      // @ts-ignore - Add note as alias to frequency for Note signal connections
-      oscillator.current.note = oscillator.current.frequency;
-
-      data.registerAudioNode(id, oscillator.current, {
+    if (vcoNode.current) {
+      data.registerAudioNode(id, vcoNode.current, {
         frequency: { min: 20, max: 2000 },
         detune: { min: -100, max: 100 },
       });
@@ -78,26 +183,26 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
   }, [id, data.registerAudioNode, data.edges]);
 
   const handleFrequencyChange = useCallback((value: number | number[]) => {
-    if (oscillator.current && typeof value === 'number') {
-      oscillator.current.frequency.value = value;
+    if (vcoNode.current && typeof value === 'number') {
+      vcoNode.current.frequency.value = value;
     }
   }, []);
 
   const handleTypeChange = useCallback((event: SelectChangeEvent) => {
-    if (oscillator.current) {
-      oscillator.current.type = event.target.value as Tone.ToneOscillatorType;
+    if (vcoNode.current) {
+      vcoNode.current.type = event.target.value as Tone.ToneOscillatorType;
     }
   }, []);
 
   const handlePlayToggle = useCallback(async () => {
-    if (oscillator.current) {
+    if (vcoNode.current) {
       if (isPlaying) {
-        oscillator.current.stop();
+        vcoNode.current.stop();
       } else {
         // Tone.jsのコンテキストを開始
         await Tone.start();
         console.log('Audio Context State:', Tone.context.state);
-        oscillator.current.start();
+        vcoNode.current.start();
       }
       setIsPlaying(!isPlaying);
     }
@@ -111,12 +216,12 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
       hasOutputHandle={true}
       hasControl1Handle={true}
       control1Target={{
-        label: 'Frequency',
+        label: 'CV In',
         property: 'frequency',
       }}
       hasControl2Handle={true}
       control2Target={{
-        label: 'Note',
+        label: 'Note In',
         property: 'note',
       }}
     >
@@ -148,10 +253,10 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
         {data.debug && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2">
-              Frequency: {oscillator.current?.frequency.value}
-              Type: {oscillator.current?.type}
+              Frequency: {vcoNode.current?.frequency.value}
+              Type: {vcoNode.current?.type}
             </Typography>
-            <Button variant="contained" onClick={() => console.log(oscillator.current)}>
+            <Button variant="contained" onClick={() => console.log(vcoNode.current)}>
               DEBUG
             </Button>
           </Box>
