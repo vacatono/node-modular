@@ -19,6 +19,7 @@ interface NodeProps {
 class KeyboardNode extends Tone.ToneAudioNode {
   public gateOutput: Tone.Gain;
   private connectedNotes: any[] = []; // 接続されたNoteイベントターゲットのリスト
+  private connectedTriggers: any[] = []; // 接続されたTriggerイベントターゲットのリスト
   private _dummyInput = new Tone.Gain(); // Abstractクラスの要件を満たすためのダミー入力
 
   constructor() {
@@ -53,9 +54,19 @@ class KeyboardNode extends Tone.ToneAudioNode {
     });
 
     // GateをHighにする
-    // ランプを防ぐために即座に設定
     this.gateOutput.gain.cancelScheduledValues(Tone.now());
     this.gateOutput.gain.setValueAtTime(1, Tone.now());
+
+    // Trigger接続されたターゲットをトリガー
+    this.connectedTriggers.forEach((target) => {
+      if (typeof target.triggerAttack === 'function') {
+        target.triggerAttack(Tone.now());
+      } else if (typeof target.triggerAttackRelease === 'function') {
+        // フォールバック: triggerAttackがない場合はtriggerAttackReleaseを使用 (短音)
+        // target.triggerAttackRelease('8n', Tone.now());
+        // しかし、キーボードは押している間鳴ってほしいので、triggerAttackが望ましい
+      }
+    });
   }
 
   /**
@@ -65,6 +76,13 @@ class KeyboardNode extends Tone.ToneAudioNode {
     // GateをLowにする
     this.gateOutput.gain.cancelScheduledValues(Tone.now());
     this.gateOutput.gain.setValueAtTime(0, Tone.now());
+
+    // Trigger接続されたターゲットをリリース
+    this.connectedTriggers.forEach((target) => {
+      if (typeof target.triggerRelease === 'function') {
+        target.triggerRelease(Tone.now());
+      }
+    });
   }
 
   /**
@@ -82,6 +100,17 @@ class KeyboardNode extends Tone.ToneAudioNode {
    */
   connectGate(target: Tone.ToneAudioNode): void {
     this.gateOutput.connect(target);
+  }
+
+  /**
+   * トリガー出力先として登録
+   * AudioNodeManagerから呼び出される
+   */
+  connectTrigger(target: any): void {
+    if (!this.connectedTriggers.includes(target)) {
+      this.connectedTriggers.push(target);
+      console.log('[DEBUG] Keyboard connected Trigger event target:', target);
+    }
   }
 
   dispose(): this {
@@ -110,6 +139,7 @@ const KEYS = [
 
 const NodeKeyboard = ({ data, id }: NodeProps) => {
   const keyboardNode = useRef<KeyboardNode | null>(null);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   useEffect(() => {
     keyboardNode.current = new KeyboardNode();
@@ -123,12 +153,14 @@ const NodeKeyboard = ({ data, id }: NodeProps) => {
   }, [id, data.registerAudioNode]);
 
   const handleMouseDown = useCallback((note: string) => {
+    setActiveKey(note);
     if (keyboardNode.current) {
       keyboardNode.current.triggerAttack(note);
     }
   }, []);
 
   const handleMouseUp = useCallback(() => {
+    setActiveKey(null);
     if (keyboardNode.current) {
       keyboardNode.current.triggerRelease();
     }
@@ -187,12 +219,16 @@ const NodeKeyboard = ({ data, id }: NodeProps) => {
             let whiteKeyIndex = 0;
             return KEYS.map((key) => {
               const isBlack = key.color === 'black';
+              const isActive = activeKey === key.note;
+
               let style: React.CSSProperties = {
                 width: isBlack ? 24 : 36,
                 height: isBlack ? 70 : 120,
-                backgroundColor: isBlack ? '#333' : '#fff',
-                color: isBlack ? '#fff' : '#000',
-                border: '1px solid #999',
+                backgroundColor: isActive
+                  ? '#c2185b' // Pinkish color for active state
+                  : (isBlack ? '#333' : '#fff'),
+                color: isActive ? '#fff' : (isBlack ? '#fff' : '#000'),
+                border: isActive ? '1px solid #e91e63' : '1px solid #999',
                 borderRadius: '0 0 4px 4px',
                 zIndex: isBlack ? 10 : 1,
                 display: 'flex',
