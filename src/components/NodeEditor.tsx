@@ -27,6 +27,7 @@ import { audioNodeManager } from '../utils/AudioNodeManager';
 import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
 import NodeSequencer from '@/modules/NodeSequencer';
+import NodeNoteToCV from '@/modules/NodeNoteToCV';
 
 const debug = true;
 
@@ -41,6 +42,7 @@ const nodeTypes: NodeTypes = {
   oscilloscope: NodeOscilloscope,
   amplitudeEnvelope: NodeAmplitudeEnvelope,
   sequencer: NodeSequencer,
+  noteToCV: NodeNoteToCV,
 };
 
 // 初期ノードを定義
@@ -228,7 +230,11 @@ const NodeEditor = () => {
         position: { x: 100, y: 100 },
         data: {
           label: type === 'amplitudeEnvelope' ? 'ENVELOPE' : type.toUpperCase(),
-          registerAudioNode: (nodeId: string, audioNode: Tone.ToneAudioNode, params?: Record<string, { min: number; max: number }>) => {
+          registerAudioNode: (
+            nodeId: string,
+            audioNode: Tone.ToneAudioNode,
+            params?: Record<string, { min: number; max: number }>
+          ) => {
             audioNodeManager.registerAudioNode(nodeId, audioNode, edges, params);
           },
         },
@@ -378,6 +384,9 @@ const NodeEditor = () => {
           </Button>
           <Button variant="contained" onClick={() => addNode('sequencer')}>
             Add Sequencer
+          </Button>
+          <Button variant="contained" onClick={() => addNode('noteToCV')}>
+            Add Note→CV
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>

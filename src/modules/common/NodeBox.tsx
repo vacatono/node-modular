@@ -14,10 +14,12 @@ interface NodeBoxProps {
   control1Target?: {
     label: string;
     property: string;
+    isSource?: boolean;
   };
   control2Target?: {
     label: string;
     property: string;
+    isSource?: boolean;
   };
   draggable?: boolean;
 }
@@ -63,33 +65,74 @@ const NodeBox = ({
         />
       )}
       {hasControl1Handle && control1Target && (
-        <Handle
-          key={`${id}-control1-${control1Target.property}`}
-          type="target"
-          position={Position.Top}
-          id={`${id}-control1-${control1Target.property}-${control1Target.property === 'trigger' ? 'gate' : 'cv'}`}
-          style={{
-            background: control1Target.property === 'trigger' ? '#e91e63' : '#4caf50',
-            width: 20,
-            height: 20,
-            top: -10,
-          }}
-        />
+        <>
+          <Handle
+            key={`${id}-control1-${control1Target.property}`}
+            type={control1Target.isSource ? 'source' : 'target'}
+            position={Position.Top}
+            id={`${id}-control1-${control1Target.property}-${
+              control1Target.property === 'trigger' ? 'gate' : control1Target.property === 'note' ? 'note' : 'cv'
+            }`}
+            style={{
+              background:
+                control1Target.property === 'trigger'
+                  ? '#e91e63'
+                  : control1Target.property === 'note'
+                  ? '#ff9800'
+                  : '#4caf50',
+              width: 20,
+              height: 20,
+              top: -10,
+            }}
+          />
+          {control1Target.label && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -30,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '10px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {control1Target.label}
+            </Box>
+          )}
+        </>
       )}
       {hasControl2Handle && control2Target && (
-        <Handle
-          key={`${id}-control2-${control2Target.property}`}
-          type="target"
-          position={Position.Bottom}
-          id={`${id}-control2-${control2Target.property}-${control2Target.property === 'note' ? 'note' : 'cv'}`}
-          style={{
-            background: control2Target.property === 'note' ? '#ff9800' : '#4caf50',
-            borderStyle: 'none',
-            width: 20,
-            height: 20,
-            bottom: -10,
-          }}
-        />
+        <>
+          <Handle
+            key={`${id}-control2-${control2Target.property}`}
+            type={control2Target.isSource ? 'source' : 'target'}
+            position={Position.Bottom}
+            id={`${id}-control2-${control2Target.property}-${
+              control2Target.property === 'note' ? 'note' : control2Target.property === 'frequency' ? 'cv' : 'cv'
+            }`}
+            style={{
+              background: control2Target.property === 'note' ? '#ff9800' : '#4caf50',
+              borderStyle: 'none',
+              width: 20,
+              height: 20,
+              bottom: -10,
+            }}
+          />
+          {control2Target.label && (
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: -30,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '10px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {control2Target.label}
+            </Box>
+          )}
+        </>
       )}
       <Box
         sx={{
