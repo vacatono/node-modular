@@ -247,14 +247,22 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
 
     console.log('[DEBUG] NodeSequencer - new instance created, connectedTriggers:', sequencer.current.connectedTriggers.length);
 
-    // オーディオノードの登録
-    data.registerAudioNode(id, sequencer.current);
+    // オーディオノードの登録（useEffectの外で呼び出す）
+    // registerAudioNodeは別のuseEffectで呼び出す
 
     return () => {
       console.log('[DEBUG] NodeSequencer useEffect cleanup - disposing instance');
       sequencer.current?.dispose();
     };
-  }, [id, steps, keys, tempo, data.registerAudioNode]);
+  }, [id, steps, keys, tempo]);
+
+  // オーディオノードの登録（registerAudioNodeの変更に依存しない）
+  useEffect(() => {
+    if (sequencer.current) {
+      console.log('[DEBUG] NodeSequencer - registering audio node');
+      data.registerAudioNode(id, sequencer.current);
+    }
+  }, [id, data.registerAudioNode]);
 
   // キー名変更ハンドラ
   const handleKeyChange = useCallback((index: number, newKey: string) => {

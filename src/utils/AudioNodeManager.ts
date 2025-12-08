@@ -197,7 +197,16 @@ export class AudioNodeManager {
               // @ts-ignore: Dynamic property access
               const targetParam = targetNode[property];
 
-              if (targetParam && typeof targetParam.connect === 'function') {
+              // propertyが'output'の場合、ソースノード全体を接続
+              if (property === 'output') {
+                if (targetType === 'cv') {
+                  // CV信号: ソースノードをターゲットノードに直接接続（Audio接続として扱う）
+                  sourceNode.connect(targetNode);
+                  console.log(`Connected CV (output) directly to target node`);
+                } else {
+                  console.warn(`Note signal cannot connect to output property`);
+                }
+              } else if (targetParam && typeof targetParam.connect === 'function') {
                 if (targetType === 'note') {
                   // Note信号: 直接接続（周波数値として）
                   sourceNode.connect(targetParam);

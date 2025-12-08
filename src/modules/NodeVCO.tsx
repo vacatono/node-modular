@@ -34,11 +34,30 @@ import { Edge } from 'reactflow';
  */
 class VCONode extends Tone.ToneAudioNode {
   private oscillator: Tone.Oscillator;
+  private baseFrequency: Tone.Signal<'frequency'>;
+  private frequencyInput: Tone.Add;
 
   constructor(options: { frequency?: number; type?: Tone.ToneOscillatorType }) {
     super();
     this.oscillator = new Tone.Oscillator(options.frequency || 440, options.type || 'sine');
-    
+
+    // ベース周波数用のSignal
+    this.baseFrequency = new Tone.Signal(options.frequency || 440);
+
+    // ベース周波数と入力信号を加算するAddノード
+    this.frequencyInput = new Tone.Add();
+
+    // ベース周波数をAddノードの入力（デフォルト）に接続
+    this.baseFrequency.connect(this.frequencyInput);
+
+    // Addノードの出力をoscillatorのfrequencyに接続
+    this.frequencyInput.connect(this.oscillator.frequency);
+
+    console.log('[DEBUG] VCONode constructor - frequencyInput created:', {
+      hasAddend: !!this.frequencyInput.addend,
+      baseFrequency: this.baseFrequency.value,
+    });
+
     // @ts-ignore - Add note as alias to frequency for Note signal connections
     this.oscillator.note = this.oscillator.frequency;
   }
@@ -66,16 +85,26 @@ class VCONode extends Tone.ToneAudioNode {
 
   /**
    * 周波数パラメータへのアクセス
+   * 接続されたSignalはAddノードのaddend入力として扱われる
    */
-  get frequency(): Tone.Signal<'frequency'> {
-    return this.oscillator.frequency;
+  get frequency(): any {
+    // @ts-ignore - Tone.Addのaddendプロパティに接続
+    return this.frequencyInput.addend;
   }
 
   /**
    * Noteパラメータへのアクセス（frequencyのエイリアス）
    */
-  get note(): Tone.Signal<'frequency'> {
-    return this.oscillator.frequency;
+  get note(): any {
+    // @ts-ignore - Tone.Addのaddendプロパティに接続
+    return this.frequencyInput.addend;
+  }
+
+  /**
+   * ベース周波数の設定（スライダー用）
+   */
+  setBaseFrequency(value: number): void {
+    this.baseFrequency.value = value;
   }
 
   /**
@@ -95,15 +124,16 @@ class VCONode extends Tone.ToneAudioNode {
   triggerAttackRelease(duration: string | number, time?: Tone.Unit.Time): this {
     const startTime = time || Tone.now();
     const durationValue = typeof duration === 'string' ? Tone.Time(duration).toSeconds() : duration;
-    
+
     // オシレーターを開始
     if (this.oscillator.state !== 'started') {
       this.oscillator.start(startTime);
     }
-    
+
     // 指定時間後に停止
-    this.oscillator.stop(startTime + durationValue);
-    
+    const stopTime = typeof startTime === 'number' ? startTime + durationValue : Tone.Time(startTime).toSeconds() + durationValue;
+    this.oscillator.stop(stopTime);
+
     return this;
   }
 
@@ -128,6 +158,8 @@ class VCONode extends Tone.ToneAudioNode {
    */
   dispose(): this {
     this.oscillator.dispose();
+    this.baseFrequency.dispose();
+    this.frequencyInput.dispose();
     super.dispose();
     return this;
   }
@@ -184,7 +216,9 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
 
   const handleFrequencyChange = useCallback((value: number | number[]) => {
     if (vcoNode.current && typeof value === 'number') {
-      vcoNode.current.frequency.value = value;
+      // ベース周波数を設定（接続されたSignalはオフセットとして扱われる）
+      vcoNode.current.setBaseFrequency(value);
+      console.log('[DEBUG] VCO base frequency set to:', value);
     }
   }, []);
 
