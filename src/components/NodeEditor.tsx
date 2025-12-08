@@ -28,6 +28,7 @@ import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
 import NodeSequencer from '@/modules/NodeSequencer';
 import NodeNoteToCV from '@/modules/NodeNoteToCV';
+import NodeKeyboard from '@/modules/NodeKeyboard';
 
 const debug = true;
 
@@ -43,6 +44,7 @@ const nodeTypes: NodeTypes = {
   amplitudeEnvelope: NodeAmplitudeEnvelope,
   sequencer: NodeSequencer,
   noteToCV: NodeNoteToCV,
+  keyboard: NodeKeyboard,
 };
 
 // 初期ノードを定義
@@ -384,6 +386,9 @@ const NodeEditor = () => {
           </Button>
           <Button variant="contained" onClick={() => addNode('noteToCV')}>
             Add Note→CV
+          </Button>
+          <Button variant="contained" onClick={() => addNode('keyboard')}>
+            Add Keyboard
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>

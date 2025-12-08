@@ -137,7 +137,7 @@ class VCONode extends Tone.ToneAudioNode {
    */
   setNote(note: string | number): void {
     const frequency = Tone.Frequency(note).toFrequency();
-    this.baseFrequency.value = frequency;
+    this.baseFrequency.setValueAtTime(frequency, Tone.now());
     console.log('[DEBUG] VCO received note event:', note, '->', frequency);
   }
 

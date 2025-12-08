@@ -9,6 +9,7 @@ interface NodeBoxProps {
   children: React.ReactNode;
   hasInputHandle?: boolean;
   hasOutputHandle?: boolean;
+  outputLabel?: string;
   hasControl1Handle?: boolean;
   hasControl2Handle?: boolean;
   hasControl3Handle?: boolean;
@@ -36,6 +37,7 @@ const NodeBox = ({
   children,
   hasInputHandle = true,
   hasOutputHandle = true,
+  outputLabel = 'Audio Out',
   hasControl1Handle = false,
   hasControl2Handle = false,
   hasControl3Handle = false,
@@ -53,7 +55,7 @@ const NodeBox = ({
   const getHandleLabel = (target: { label: string; property: string; isSource?: boolean }): string => {
     const isSource = target.isSource ?? false;
     const property = target.property;
-    
+
     // 信号タイプを判定
     let signalType = 'CV';
     if (property === 'trigger') {
@@ -63,10 +65,10 @@ const NodeBox = ({
     } else if (property === 'frequency' || property === 'detune' || property === 'attack' || property === 'decay' || property === 'sustain' || property === 'release') {
       signalType = 'CV';
     }
-    
+
     // 方向を判定
     const direction = isSource ? 'Out' : 'In';
-    
+
     return `${signalType} ${direction}`;
   };
 
@@ -79,12 +81,12 @@ const NodeBox = ({
     >
       {hasOutputHandle && (
         <>
-        <Handle
-          type="source"
-          position={Position.Right}
-          id={`${id}-output-audio`}
-          style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', right: -10 }}
-        />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id={`${id}-output-audio`}
+            style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', right: -10 }}
+          />
           <Box
             sx={{
               position: 'absolute',
@@ -95,18 +97,18 @@ const NodeBox = ({
               whiteSpace: 'nowrap',
             }}
           >
-            Audio Out
+            {outputLabel}
           </Box>
         </>
       )}
       {hasInputHandle && (
         <>
-        <Handle
-          type="target"
-          position={Position.Left}
-          id={`${id}-input-audio`}
-          style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', left: -10 }}
-        />
+          <Handle
+            type="target"
+            position={Position.Left}
+            id={`${id}-input-audio`}
+            style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', left: -10 }}
+          />
           <Box
             sx={{
               position: 'absolute',
@@ -127,33 +129,32 @@ const NodeBox = ({
             key={`${id}-control1-${control1Target.property}`}
             type={control1Target.isSource ? 'source' : 'target'}
             position={Position.Top}
-            id={`${id}-control1-${control1Target.property}-${
-              control1Target.property === 'trigger' ? 'gate' : control1Target.property === 'note' ? 'note' : 'cv'
-            }`}
+            id={`${id}-control1-${control1Target.property}-${control1Target.property === 'trigger' ? 'gate' : control1Target.property === 'note' ? 'note' : 'cv'
+              }`}
             style={{
               background:
                 control1Target.property === 'trigger'
                   ? '#e91e63'
                   : control1Target.property === 'note'
-                  ? '#ff9800'
-                  : '#4caf50',
+                    ? '#ff9800'
+                    : '#4caf50',
               width: 20,
               height: 20,
               top: -10,
             }}
           />
-            <Box
-              sx={{
-                position: 'absolute',
-                top: -30,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                fontSize: '10px',
-                whiteSpace: 'nowrap',
-              }}
-            >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -30,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {getHandleLabel(control1Target)}
-            </Box>
+          </Box>
         </>
       )}
       {hasControl2Handle && control2Target && (
@@ -162,9 +163,8 @@ const NodeBox = ({
             key={`${id}-control2-${control2Target.property}`}
             type={control2Target.isSource ? 'source' : 'target'}
             position={Position.Bottom}
-            id={`${id}-control2-${control2Target.property}-${
-              control2Target.property === 'note' ? 'note' : control2Target.property === 'frequency' ? 'cv' : 'cv'
-            }`}
+            id={`${id}-control2-${control2Target.property}-${control2Target.property === 'note' ? 'note' : control2Target.property === 'frequency' ? 'cv' : 'cv'
+              }`}
             style={{
               background: control2Target.property === 'note' ? '#ff9800' : '#4caf50',
               borderStyle: 'none',
@@ -173,29 +173,28 @@ const NodeBox = ({
               bottom: -10,
             }}
           />
-            <Box
-              sx={{
-                position: 'absolute',
-                bottom: -30,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                fontSize: '10px',
-                whiteSpace: 'nowrap',
-              }}
-            >
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: -30,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: '10px',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {getHandleLabel(control2Target)}
-            </Box>
+          </Box>
         </>
-          )}
+      )}
       {hasControl3Handle && control3Target && (
         <>
           <Handle
             key={`${id}-control3-${control3Target.property}`}
             type={control3Target.isSource ? 'source' : 'target'}
             position={Position.Left}
-            id={`${id}-control3-${control3Target.property}-${
-              control3Target.property === 'note' ? 'note' : control3Target.property === 'frequency' ? 'cv' : 'cv'
-            }`}
+            id={`${id}-control3-${control3Target.property}-${control3Target.property === 'note' ? 'note' : control3Target.property === 'frequency' ? 'cv' : 'cv'
+              }`}
             style={{
               background: control3Target.property === 'note' ? '#ff9800' : '#4caf50',
               borderStyle: 'none',

@@ -227,21 +227,21 @@ export class AudioNodeManager {
               (targetNode as any).setNoteInputConnected(true);
             }
 
-            if (targetParam && typeof targetParam.connect === 'function') {
-              if (targetType === 'note') {
-                // Note信号: イベントベース接続を優先
+            // Note信号の特別処理: targetParamの有無に関わらず、イベント接続を試みる
+            if (targetType === 'note') {
+                console.log(`[DEBUG] Attempting Note connection (Early Check). Source: ${sourceNode.name || sourceNode.constructor.name}, Target: ${targetNode.name || targetNode.constructor.name}`);
                 // @ts-ignore
                 if (typeof sourceNode.connectNote === 'function') {
                   // @ts-ignore
                   sourceNode.connectNote(targetNode);
-                  console.log(`[DEBUG] Connected Note event bus`, { source: edge.source, target: edge.target });
-                } else {
-                  // フォールバック: 直接接続（周波数値として）
-                  actualSourceNode.connect(targetParam);
-                  console.log(`Connected Note signal directly to ${targetProperty}`);
+                  console.log(`[DEBUG] Connected Note event bus between ${edge.source} and ${edge.target}`);
+                  return; // イベント接続成功ならここで終了
                 }
-              } else {
-                // CV信号
+                // connectNoteがない場合は、下のtargetParam接続（フォールバック）へ進む
+            }
+
+            if (targetParam && typeof targetParam.connect === 'function') {
+              // CV信号の処理 (Noteのフォールバック含む)
                 const targetParams = this.nodeParams.get(edge.target);
                 const paramDef = targetParams?.[targetProperty];
                 
@@ -259,7 +259,6 @@ export class AudioNodeManager {
                   actualSourceNode.connect(targetParam);
                   console.log(`Connected CV directly to ${targetProperty} (no params defined)`);
                 }
-              }
             } else {
               console.warn(`Target property ${targetProperty} is not a valid AudioParam`);
             }
