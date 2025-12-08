@@ -75,7 +75,18 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
   }, []);
 
   return (
-    <NodeBox id={id} label={data.label} hasInputHandle={false}>
+    <NodeBox 
+      id={id} 
+      label={data.label} 
+      hasInputHandle={false}
+      hasOutputHandle={false}
+      hasControl1Handle={true}
+      control1Target={{
+        label: 'CV Out',
+        property: 'output',
+        isSource: true,
+      }}
+    >
       <Box sx={{ mt: 2 }}>
         <CustomSlider
           label="Frequency"
