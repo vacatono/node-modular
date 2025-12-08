@@ -135,8 +135,8 @@ const NodeBox = ({
                 control1Target.property === 'trigger'
                   ? '#e91e63'
                   : control1Target.property === 'note'
-                  ? '#ff9800'
-                  : '#4caf50',
+                    ? '#ff9800'
+                    : '#4caf50',
               width: 20,
               height: 20,
               top: -10,

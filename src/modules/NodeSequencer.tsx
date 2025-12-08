@@ -78,7 +78,7 @@ class SequencerNode extends Tone.ToneAudioNode {
               });
               if (target && typeof target.triggerAttackRelease === 'function') {
                 // 16分音符分の長さでトリガー
-                target.triggerAttackRelease("16n", time);
+                target.triggerAttackRelease('16n', time);
                 console.log(`[DEBUG] triggerAttackRelease called on target ${index}`);
               } else {
                 console.warn(`[DEBUG] Target ${index} does not have triggerAttackRelease method`);
@@ -245,7 +245,7 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       onStep: (step) => setCurrentStep(step),
     });
 
-    console.log('[DEBUG] NodeSequencer - new instance created, connectedTriggers:', sequencer.current.connectedTriggers.length);
+    console.log('[DEBUG] NodeSequencer - new instance created');
 
     // オーディオノードの登録（useEffectの外で呼び出す）
     // registerAudioNodeは別のuseEffectで呼び出す

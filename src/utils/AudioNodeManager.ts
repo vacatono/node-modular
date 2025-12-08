@@ -100,7 +100,7 @@ export class AudioNodeManager {
               sourceNode.connectTrigger(targetNode);
               console.log('Connected trigger (Gate)', { source: edge.source, target: nodeId });
             } else {
-               console.warn('Source node does not support connectTrigger');
+              console.warn('Source node does not support connectTrigger');
             }
           } else if (targetType === 'note' || targetType === 'cv') {
             // Note/CV信号: パラメータへの接続
@@ -109,33 +109,64 @@ export class AudioNodeManager {
               return;
             }
             
+            // ソース側のpropertyが'output'の場合、ターゲット側の処理はスキップ（ソース側で処理される）
+            const sourceProperty = edge.data?.sourceProperty;
+            if (sourceProperty === 'output') {
+              console.log('[DEBUG] Skipping target-side connection for source property "output" (handled on source side)');
+              return;
+            }
+            
             const targetParams = this.nodeParams.get(nodeId);
             const paramDef = targetParams?.[property];
             
-            // @ts-ignore: Dynamic property access
-            const targetParam = targetNode[property];
-
-            if (targetParam && typeof targetParam.connect === 'function') {
-              if (targetType === 'note') {
-                // Note信号: 直接接続（周波数値として）
-                sourceNode.connect(targetParam);
-                console.log(`Connected Note signal directly to ${property}`);
-              } else if (paramDef) {
-                // CV信号でパラメータ定義がある場合: Scaleを使用
-                const { min, max } = paramDef;
-                const scale = new Tone.Scale(min, max);
-                
-                sourceNode.connect(scale);
-                scale.connect(targetParam);
-                
-                console.log(`Connected CV with scale [${min}, ${max}] to ${property}`);
+            // propertyが'input'の場合、ターゲットノードのinputプロパティに接続
+            if (property === 'input') {
+              // @ts-ignore: Dynamic property access
+              const targetInput = targetNode.input;
+              // @ts-ignore: input may be ToneAudioNode or Param
+              if (targetInput && typeof targetInput.connect === 'function') {
+                // 入力ノードに接続
+                sourceNode.connect(targetInput);
+                console.log(`Connected ${targetType} signal to input`);
               } else {
-                // CV信号でパラメータ定義がない場合: 直接接続
-                sourceNode.connect(targetParam);
-                console.log(`Connected CV directly to ${property} (no params defined)`);
+                // inputプロパティがない場合、ノード全体に接続
+                sourceNode.connect(targetNode);
+                console.log(`Connected ${targetType} signal to target node`);
               }
             } else {
-              console.warn(`Target property ${property} is not a valid AudioParam`);
+              // @ts-ignore: Dynamic property access
+              const targetParam = targetNode[property];
+
+              console.log('[DEBUG] Target-side connection:', {
+                property,
+                hasTargetParam: !!targetParam,
+                targetParamType: typeof targetParam,
+                hasConnect: targetParam && typeof targetParam.connect === 'function',
+                paramDef,
+              });
+
+              if (targetParam && typeof targetParam.connect === 'function') {
+                if (targetType === 'note') {
+                  // Note信号: 直接接続（周波数値として）
+                  sourceNode.connect(targetParam);
+                  console.log(`Connected Note signal directly to ${property}`);
+                } else if (paramDef) {
+                  // CV信号でパラメータ定義がある場合: Scaleを使用
+                  const { min, max } = paramDef;
+                  const scale = new Tone.Scale(min, max);
+                  
+                  sourceNode.connect(scale);
+                  scale.connect(targetParam);
+                  
+                  console.log(`[DEBUG] Connected CV with scale [${min}, ${max}] to ${property}`);
+                } else {
+                  // CV信号でパラメータ定義がない場合: 直接接続
+                  sourceNode.connect(targetParam);
+                  console.log(`[DEBUG] Connected CV directly to ${property} (no params defined)`);
+                }
+              } else {
+                console.warn(`[DEBUG] Target property ${property} is not a valid AudioParam`);
+              }
             }
           } else if (targetType === 'audio') {
             // Audio信号: 通常のオーディオ接続
@@ -184,49 +215,130 @@ export class AudioNodeManager {
               sourceNode.connectTrigger(targetNode);
               console.log('Connected trigger (Gate) - source re-registered', { source: nodeId, target: edge.target });
             } else {
-               console.warn('Source node does not support connectTrigger');
+              console.warn('Source node does not support connectTrigger');
             }
           } else if (targetType === 'note' || targetType === 'cv') {
             // Note/CV信号: パラメータへの接続
             if (!property) {
               console.warn('No target property specified for CV/Note connection');
             } else {
-              const targetParams = this.nodeParams.get(edge.target);
-              const paramDef = targetParams?.[property];
-              
-              // @ts-ignore: Dynamic property access
-              const targetParam = targetNode[property];
-
-              // propertyが'output'の場合、ソースノード全体を接続
+              // propertyが'output'の場合、ソースノードの出力をターゲットに接続
               if (property === 'output') {
                 if (targetType === 'cv') {
-                  // CV信号: ソースノードをターゲットノードに直接接続（Audio接続として扱う）
-                  sourceNode.connect(targetNode);
-                  console.log(`Connected CV (output) directly to target node`);
-                } else {
-                  console.warn(`Note signal cannot connect to output property`);
-                }
-              } else if (targetParam && typeof targetParam.connect === 'function') {
-                if (targetType === 'note') {
-                  // Note信号: 直接接続（周波数値として）
-                  sourceNode.connect(targetParam);
-                  console.log(`Connected Note signal directly to ${property}`);
-                } else if (paramDef) {
-                  // CV信号でパラメータ定義がある場合: Scaleを使用
-                  const { min, max } = paramDef;
-                  const scale = new Tone.Scale(min, max);
+                  // CV信号: ソースノードの出力をターゲットノードのプロパティに接続
+                  // ターゲットプロパティを取得（edge.data.targetPropertyから）
+                  const targetProperty = edge.data?.targetProperty;
                   
-                  sourceNode.connect(scale);
-                  scale.connect(targetParam);
+                  console.log('[DEBUG] CV (output) connection (source side):', {
+                    source: nodeId,
+                    target: edge.target,
+                    targetProperty,
+                    edgeData: edge.data,
+                  });
                   
-                  console.log(`Connected CV with scale [${min}, ${max}] to ${property}`);
+                  if (!targetProperty) {
+                    console.warn('[DEBUG] No target property specified for CV (output) connection');
+                    return;
+                  }
+                  
+                  // @ts-ignore: Dynamic property access
+                  const targetProp = targetNode[targetProperty];
+                  
+                  console.log('[DEBUG] Target property access (source side):', {
+                    targetProperty,
+                    hasTargetProp: !!targetProp,
+                    targetPropType: typeof targetProp,
+                    hasConnect: targetProp && typeof targetProp.connect === 'function',
+                  });
+                  
+                  // ターゲットのパラメータ定義を取得
+                  const targetParams = this.nodeParams.get(edge.target);
+                  const paramDef = targetParams?.[targetProperty];
+                  
+                  console.log('[DEBUG] Parameter definition (source side):', {
+                    targetProperty,
+                    paramDef,
+                    hasParamDef: !!paramDef,
+                    targetPropType: typeof targetProp,
+                    targetPropConstructor: targetProp?.constructor?.name,
+                  });
+                  
+                  if (targetProp) {
+                    if (paramDef) {
+                      // CV信号でパラメータ定義がある場合: Scaleを使用
+                      const { min, max } = paramDef;
+                      const scale = new Tone.Scale(min, max);
+                      
+                      // LFOの出力をScaleに接続
+                      sourceNode.connect(scale);
+                      
+                      // Scaleの出力をターゲットプロパティに接続
+                      // targetPropがTone.Signalの場合、connectメソッドを使用
+                      if (typeof targetProp.connect === 'function') {
+                        scale.connect(targetProp);
+                        console.log(`[DEBUG] Connected CV (output) with scale [${min}, ${max}] to ${targetProperty} (via connect)`);
+                      } else if (targetProp instanceof Tone.Signal) {
+                        // Tone.Signalとして扱う
+                        scale.connect(targetProp);
+                        console.log(`[DEBUG] Connected CV (output) with scale [${min}, ${max}] to ${targetProperty} (as Tone.Signal)`);
+                      } else {
+                        // その他の場合、直接接続を試みる
+                        try {
+                          scale.connect(targetProp);
+                          console.log(`[DEBUG] Connected CV (output) with scale [${min}, ${max}] to ${targetProperty} (direct)`);
+                        } catch (error) {
+                          console.error(`[DEBUG] Failed to connect scale to ${targetProperty}:`, error);
+                          // フォールバック: 直接接続
+                          sourceNode.connect(targetProp);
+                          console.log(`[DEBUG] Fallback: Connected CV (output) directly to ${targetProperty}`);
+                        }
+                      }
+                    } else {
+                      // パラメータ定義がない場合: 直接接続
+                      if (typeof targetProp.connect === 'function') {
+                        sourceNode.connect(targetProp);
+                        console.log(`[DEBUG] Connected CV (output) directly to ${targetProperty} (no params defined)`);
+                      } else {
+                        console.warn(`[DEBUG] Target property ${targetProperty} does not have connect method`);
+                      }
+                    }
+                  } else {
+                    // ターゲットプロパティがない場合、ノード全体に接続
+                    sourceNode.connect(targetNode);
+                    console.log(`[DEBUG] Connected CV (output) directly to target node (target property ${targetProperty} not found)`);
+                  }
                 } else {
-                  // CV信号でパラメータ定義がない場合: 直接接続
-                  sourceNode.connect(targetParam);
-                  console.log(`Connected CV directly to ${property} (no params defined)`);
+                  console.warn('Note signal cannot connect to output property');
                 }
               } else {
-                console.warn(`Target property ${property} is not a valid AudioParam`);
+                const targetParams = this.nodeParams.get(edge.target);
+                const paramDef = targetParams?.[property];
+                
+                // @ts-ignore: Dynamic property access
+                const targetParam = targetNode[property];
+
+                if (targetParam && typeof targetParam.connect === 'function') {
+                  if (targetType === 'note') {
+                    // Note信号: 直接接続（周波数値として）
+                    sourceNode.connect(targetParam);
+                    console.log(`Connected Note signal directly to ${property}`);
+                  } else if (paramDef) {
+                    // CV信号でパラメータ定義がある場合: Scaleを使用
+                    const { min, max } = paramDef;
+                    const scale = new Tone.Scale(min, max);
+                    
+                    sourceNode.connect(scale);
+                    scale.connect(targetParam);
+                    
+                    console.log(`Connected CV with scale [${min}, ${max}] to ${property}`);
+                  } else {
+                    // CV信号でパラメータ定義がない場合: 直接接続
+                    sourceNode.connect(targetParam);
+                    console.log(`Connected CV directly to ${property} (no params defined)`);
+                  }
+                } else {
+                  console.warn(`Target property ${property} is not a valid AudioParam`);
+                }
               }
             }
           } else if (targetType === 'audio') {
