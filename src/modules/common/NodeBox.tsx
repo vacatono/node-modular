@@ -79,12 +79,12 @@ const NodeBox = ({
     >
       {hasOutputHandle && (
         <>
-          <Handle
-            type="source"
-            position={Position.Right}
-            id={`${id}-output-audio`}
-            style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', right: -10 }}
-          />
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`${id}-output-audio`}
+          style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', right: -10 }}
+        />
           <Box
             sx={{
               position: 'absolute',
@@ -101,12 +101,12 @@ const NodeBox = ({
       )}
       {hasInputHandle && (
         <>
-          <Handle
-            type="target"
-            position={Position.Left}
-            id={`${id}-input-audio`}
-            style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', left: -10 }}
-          />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id={`${id}-input-audio`}
+          style={{ width: 20, height: 20, background: '#2196f3', borderStyle: 'none', left: -10 }}
+        />
           <Box
             sx={{
               position: 'absolute',
@@ -135,25 +135,25 @@ const NodeBox = ({
                 control1Target.property === 'trigger'
                   ? '#e91e63'
                   : control1Target.property === 'note'
-                    ? '#ff9800'
-                    : '#4caf50',
+                  ? '#ff9800'
+                  : '#4caf50',
               width: 20,
               height: 20,
               top: -10,
             }}
           />
-          <Box
-            sx={{
-              position: 'absolute',
-              top: -30,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              fontSize: '10px',
-              whiteSpace: 'nowrap',
-            }}
-          >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -30,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '10px',
+                whiteSpace: 'nowrap',
+              }}
+            >
             {getHandleLabel(control1Target)}
-          </Box>
+            </Box>
         </>
       )}
       {hasControl2Handle && control2Target && (
@@ -173,20 +173,20 @@ const NodeBox = ({
               bottom: -10,
             }}
           />
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: -30,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              fontSize: '10px',
-              whiteSpace: 'nowrap',
-            }}
-          >
+            <Box
+              sx={{
+                position: 'absolute',
+                bottom: -30,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: '10px',
+                whiteSpace: 'nowrap',
+              }}
+            >
             {getHandleLabel(control2Target)}
-          </Box>
+            </Box>
         </>
-      )}
+          )}
       {hasControl3Handle && control3Target && (
         <>
           <Handle

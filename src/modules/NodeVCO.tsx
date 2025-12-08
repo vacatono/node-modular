@@ -36,13 +36,18 @@ class VCONode extends Tone.ToneAudioNode {
   private oscillator: Tone.Oscillator;
   private baseFrequency: Tone.Signal<'frequency'>;
   private frequencyInput: Tone.Add;
+  private hasCVInput: boolean = false;
+  private hasNoteInput: boolean = false;
+  private lastConnectedInput: 'cv' | 'note' | null = null;
+  private defaultFrequency: number;
 
   constructor(options: { frequency?: number; type?: Tone.ToneOscillatorType }) {
     super();
-    this.oscillator = new Tone.Oscillator(options.frequency || 440, options.type || 'sine');
+    this.defaultFrequency = options.frequency || 440;
+    this.oscillator = new Tone.Oscillator(this.defaultFrequency, options.type || 'sine');
 
     // ベース周波数用のSignal
-    this.baseFrequency = new Tone.Signal(options.frequency || 440);
+    this.baseFrequency = new Tone.Signal(this.defaultFrequency);
 
     // ベース周波数と入力信号を加算するAddノード
     this.frequencyInput = new Tone.Add();
@@ -56,6 +61,7 @@ class VCONode extends Tone.ToneAudioNode {
     console.log('[DEBUG] VCONode constructor - frequencyInput created:', {
       hasAddend: !!this.frequencyInput.addend,
       baseFrequency: this.baseFrequency.value,
+      defaultFrequency: this.defaultFrequency,
     });
 
     // @ts-ignore - Add note as alias to frequency for Note signal connections
@@ -89,7 +95,17 @@ class VCONode extends Tone.ToneAudioNode {
    */
   get frequency(): any {
     // @ts-ignore - Tone.Addのaddendプロパティに接続
-    return this.frequencyInput.addend;
+    const addend = this.frequencyInput.addend;
+    console.log('[DEBUG] VCO frequency getter called:', {
+      hasAddend: !!addend,
+      addendType: addend?.constructor?.name,
+      // @ts-ignore
+      hasConnect: typeof addend?.connect === 'function',
+      baseFrequencyValue: this.baseFrequency.value,
+      hasCVInput: this.hasCVInput,
+      hasNoteInput: this.hasNoteInput,
+    });
+    return addend;
   }
 
   /**
@@ -102,9 +118,75 @@ class VCONode extends Tone.ToneAudioNode {
 
   /**
    * ベース周波数の設定（スライダー用）
+   * CV InまたはNote Inが接続されている場合は無視される
    */
   setBaseFrequency(value: number): void {
-    this.baseFrequency.value = value;
+    if (!this.hasCVInput && !this.hasNoteInput) {
+      this.baseFrequency.value = value;
+      this.defaultFrequency = value;
+      console.log('[DEBUG] VCO base frequency set to:', value, '(no external input connected)');
+    } else {
+      const activeInput = this.lastConnectedInput || (this.hasCVInput ? 'CV' : 'Note');
+      console.log('[DEBUG] VCO base frequency ignored:', value, `(${activeInput} In connected)`);
+    }
+  }
+
+  /**
+   * CV Inの接続状態を設定
+   * CV Inが接続されている場合、ベース周波数を0に設定
+   */
+  setCVInputConnected(connected: boolean): void {
+    this.hasCVInput = connected;
+    if (connected) {
+      // CV Inが接続されている場合、ベース周波数を0に設定（CV Inの値だけを使う）
+      this.baseFrequency.value = 0;
+      this.lastConnectedInput = 'cv';
+      console.log('[DEBUG] VCO CV Input connected - base frequency set to 0', {
+        baseFrequencyValue: this.baseFrequency.value,
+        hasCVInput: this.hasCVInput,
+        hasNoteInput: this.hasNoteInput,
+        lastConnectedInput: this.lastConnectedInput,
+        frequencyInputAddend: this.frequencyInput.addend,
+      });
+    } else {
+      // CV Inが切断された場合
+      if (this.hasNoteInput) {
+        // Note Inがまだ接続されている場合はそのまま
+        this.lastConnectedInput = 'note';
+        console.log('[DEBUG] VCO CV Input disconnected - Note In still connected');
+      } else {
+        // 両方切断された場合、デフォルト周波数に戻す
+        this.baseFrequency.value = this.defaultFrequency;
+        this.lastConnectedInput = null;
+        console.log('[DEBUG] VCO CV Input disconnected - base frequency set to:', this.defaultFrequency);
+      }
+    }
+  }
+
+  /**
+   * Note Inの接続状態を設定
+   * Note Inが接続されている場合、ベース周波数を0に設定
+   */
+  setNoteInputConnected(connected: boolean): void {
+    this.hasNoteInput = connected;
+    if (connected) {
+      // Note Inが接続されている場合、ベース周波数を0に設定（Note Inの値だけを使う）
+      this.baseFrequency.value = 0;
+      this.lastConnectedInput = 'note';
+      console.log('[DEBUG] VCO Note Input connected - base frequency set to 0');
+    } else {
+      // Note Inが切断された場合
+      if (this.hasCVInput) {
+        // CV Inがまだ接続されている場合はそのまま
+        this.lastConnectedInput = 'cv';
+        console.log('[DEBUG] VCO Note Input disconnected - CV In still connected');
+      } else {
+        // 両方切断された場合、デフォルト周波数に戻す
+        this.baseFrequency.value = this.defaultFrequency;
+        this.lastConnectedInput = null;
+        console.log('[DEBUG] VCO Note Input disconnected - base frequency set to:', this.defaultFrequency);
+      }
+    }
   }
 
   /**
@@ -195,10 +277,23 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
 
   useEffect(() => {
     //console.log('NodeVCO useEffect', data);
+    const previousNode = vcoNode.current;
+    const hadCVInput = previousNode ? (previousNode as any).hasCVInput : false;
+    const hadNoteInput = previousNode ? (previousNode as any).hasNoteInput : false;
+
     vcoNode.current = new VCONode({
       frequency: data.frequency || 440,
       type: data.type || 'sine',
     });
+
+    // 以前の接続状態を復元
+    if (hadCVInput) {
+      vcoNode.current.setCVInputConnected(true);
+    }
+    if (hadNoteInput) {
+      vcoNode.current.setNoteInputConnected(true);
+    }
+
     return () => {
       vcoNode.current?.stop();
       vcoNode.current?.dispose();

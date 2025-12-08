@@ -84,7 +84,7 @@ const NodeOscilloscope = ({ data, id }: NodeOscilloscopeProps) => {
 
     // 入力モードに応じて登録
     if (inputMode === 'audio') {
-      data.registerAudioNode(id, analyserRef.current);
+    data.registerAudioNode(id, analyserRef.current);
     } else {
       data.registerAudioNode(id, cvMonitorRef.current);
     }
@@ -93,23 +93,23 @@ const NodeOscilloscope = ({ data, id }: NodeOscilloscopeProps) => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // キャンバスをクリア
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // キャンバスをクリア
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (inputMode === 'audio' && analyserRef.current) {
         // Audio信号の波形を描画
         const values = analyserRef.current.getValue() as Float32Array;
 
-        ctx.beginPath();
-        ctx.strokeStyle = '#1976d2';
-        ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.strokeStyle = '#1976d2';
+          ctx.lineWidth = 2;
 
-        values.forEach((value: number, i: number) => {
-          const x = (i / values.length) * canvas.width;
-          const y = ((value + 1) / 2) * canvas.height;
+          values.forEach((value: number, i: number) => {
+            const x = (i / values.length) * canvas.width;
+            const y = ((value + 1) / 2) * canvas.height;
 
           if (i === 0) {
             ctx.moveTo(x, y);

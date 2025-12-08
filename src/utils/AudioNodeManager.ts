@@ -145,6 +145,17 @@ export class AudioNodeManager {
                 paramDef,
               });
 
+              // VCOの入力接続状態を設定
+              if (property === 'frequency' && typeof targetNode.setCVInputConnected === 'function') {
+                // @ts-ignore
+                targetNode.setCVInputConnected(true);
+                console.log('[DEBUG] VCO CV Input connection state set to true (target side)');
+              } else if (property === 'note' && typeof targetNode.setNoteInputConnected === 'function') {
+                // @ts-ignore
+                targetNode.setNoteInputConnected(true);
+                console.log('[DEBUG] VCO Note Input connection state set to true (target side)');
+              }
+
               if (targetParam && typeof targetParam.connect === 'function') {
                 if (targetType === 'note') {
                   // Note信号: 直接接続（周波数値として）
@@ -234,6 +245,7 @@ export class AudioNodeManager {
                     target: edge.target,
                     targetProperty,
                     edgeData: edge.data,
+                    targetHandle: edge.targetHandle,
                   });
                   
                   if (!targetProperty) {
@@ -249,7 +261,19 @@ export class AudioNodeManager {
                     hasTargetProp: !!targetProp,
                     targetPropType: typeof targetProp,
                     hasConnect: targetProp && typeof targetProp.connect === 'function',
+                    targetNodeType: targetNode.constructor.name,
+                    hasSetCVInputConnected: typeof (targetNode as any).setCVInputConnected === 'function',
+                    hasSetNoteInputConnected: typeof (targetNode as any).setNoteInputConnected === 'function',
                   });
+                  
+                  // VCOの入力接続状態を設定（接続処理の前に実行）
+                  if (targetProperty === 'frequency' && typeof (targetNode as any).setCVInputConnected === 'function') {
+                    (targetNode as any).setCVInputConnected(true);
+                    console.log('[DEBUG] VCO CV Input connection state set to true (BEFORE connection)');
+                  } else if (targetProperty === 'note' && typeof (targetNode as any).setNoteInputConnected === 'function') {
+                    (targetNode as any).setNoteInputConnected(true);
+                    console.log('[DEBUG] VCO Note Input connection state set to true (BEFORE connection)');
+                  }
                   
                   // ターゲットのパラメータ定義を取得
                   const targetParams = this.nodeParams.get(edge.target);
@@ -264,19 +288,32 @@ export class AudioNodeManager {
                   });
                   
                   if (targetProp) {
+                    
                     if (paramDef) {
                       // CV信号でパラメータ定義がある場合: Scaleを使用
                       const { min, max } = paramDef;
                       const scale = new Tone.Scale(min, max);
                       
+                      console.log('[DEBUG] Creating Tone.Scale:', {
+                        min,
+                        max,
+                        sourceNodeType: sourceNode.constructor.name,
+                        targetPropType: targetProp?.constructor?.name,
+                        targetPropValue: targetProp,
+                      });
+                      
                       // LFOの出力をScaleに接続
                       sourceNode.connect(scale);
+                      console.log('[DEBUG] Source node connected to scale');
                       
                       // Scaleの出力をターゲットプロパティに接続
                       // targetPropがTone.Signalの場合、connectメソッドを使用
                       if (typeof targetProp.connect === 'function') {
                         scale.connect(targetProp);
-                        console.log(`[DEBUG] Connected CV (output) with scale [${min}, ${max}] to ${targetProperty} (via connect)`);
+                        console.log(`[DEBUG] Connected CV (output) with scale [${min}, ${max}] to ${targetProperty} (via connect)`, {
+                          scaleConnected: true,
+                          targetPropConnected: true,
+                        });
                       } else if (targetProp instanceof Tone.Signal) {
                         // Tone.Signalとして扱う
                         scale.connect(targetProp);
