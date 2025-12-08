@@ -236,86 +236,12 @@ const NodeEditor = () => {
         const updatedEdges = addEdge(newEdge, eds);
 
         // 新しい接続を処理するためにAudioNodeManagerを呼び出す
-        const sourceNode = audioNodeManager.getAudioNode(params.source!);
-        const targetNode = audioNodeManager.getAudioNode(params.target!);
-
-        console.log('[DEBUG] onConnect - checking nodes:', {
-          source: params.source,
-          target: params.target,
-          sourceNodeExists: !!sourceNode,
-          targetNodeExists: !!targetNode,
-        });
-
-        if (sourceNode && targetNode) {
-          // 上で定義したtargetTypeとsourceTypeを使用
-          const property = newEdge.data.targetProperty;
-
-          console.log('Processing new connection:', {
-            source: params.source,
-            target: params.target,
-            sourceType,
-            targetType,
-            property,
-          });
-
-          // 信号タイプに基づいて接続処理を分岐
-          if (targetType === 'gate') {
-            // Gate信号: トリガー接続
-            console.log('[DEBUG] Gate connection detected:', {
-              sourceNode: sourceNode,
-              targetNode: targetNode,
-              hasConnectTrigger: typeof (sourceNode as any).connectTrigger === 'function',
-            });
-            // @ts-ignore
-            if (typeof sourceNode.connectTrigger === 'function') {
-              // @ts-ignore
-              sourceNode.connectTrigger(targetNode);
-              console.log('[DEBUG] connectTrigger called successfully');
-              // @ts-ignore
-              if (sourceNode.connectedTriggers) {
-                // @ts-ignore
-                console.log('[DEBUG] connectedTriggers array:', sourceNode.connectedTriggers);
-              }
-              console.log('Connected trigger (Gate)', { source: params.source, target: params.target });
-            } else {
-              console.warn('Source node does not support connectTrigger', {
-                sourceNodeType: sourceNode.constructor.name,
-                sourceNode: sourceNode,
-              });
-            }
-          } else if (targetType === 'note' || targetType === 'cv') {
-            // Note/CV信号: パラメータへの接続
-            if (!property) {
-              console.warn('No target property specified for CV/Note connection');
-            } else {
-              // @ts-ignore: Dynamic property access
-              const targetParam = targetNode[property];
-
-              if (targetParam && typeof targetParam.connect === 'function') {
-                if (targetType === 'note') {
-                  // Note信号: 直接接続（周波数値として）
-                  sourceNode.connect(targetParam);
-                  console.log(`Connected Note signal directly to ${property}`);
-                } else {
-                  // CV信号: 直接接続
-                  sourceNode.connect(targetParam);
-                  console.log(`Connected CV directly to ${property}`);
-                }
-              } else {
-                console.warn(`Target property ${property} is not a valid AudioParam`);
-              }
-            }
-          } else if (targetType === 'audio') {
-            // Audio信号: 通常のオーディオ接続
-            sourceNode.connect(targetNode);
-            console.log('Connected audio nodes directly');
-          } else {
-            console.warn('Unknown signal type:', { sourceType, targetType });
-          }
-        } else {
-          // ノードが存在しない場合、registerAudioNodeで再接続される
-          console.log('[DEBUG] Nodes not yet registered, connection will be established when nodes are registered');
-        }
+        // AudioNodeManagerのconnectメソッドを使用することで、スケール処理などのロジックを統一
+        // 少し遅延させて実行することで、React Flowの状態更新との競合を防ぐ可能性（必要に応じて調整）
+        setTimeout(() => {
+          console.log('[DEBUG] onConnect calling audioNodeManager.connect', newEdge);
+          audioNodeManager.connect(newEdge);
+        }, 10);
 
         return updatedEdges;
       });
