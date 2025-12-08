@@ -20,7 +20,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 
 import * as Tone from 'tone';
 import { Box, Select, MenuItem, FormControl, InputLabel, Button, SelectChangeEvent, Typography } from '@mui/material';
@@ -309,6 +309,20 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
     }
   }, [id, data.registerAudioNode, data.edges]);
 
+  // CV入力またはNote入力が接続されているかチェック
+  const isFrequencyControlled = useMemo(() => {
+    if (!data.edges) return false;
+    return data.edges.some(edge =>
+      edge.target === id && (
+        edge.data?.targetProperty === 'frequency' ||
+        edge.data?.targetProperty === 'note' ||
+        // フォールバック: ハンドルIDチェック
+        edge.targetHandle?.includes('frequency') ||
+        edge.targetHandle?.includes('note')
+      )
+    );
+  }, [data.edges, id]);
+
   const handleFrequencyChange = useCallback((value: number | number[]) => {
     if (vcoNode.current && typeof value === 'number') {
       // ベース周波数を設定（接続されたSignalはオフセットとして扱われる）
@@ -367,12 +381,13 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
       </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
-          label="Frequency"
+          label={isFrequencyControlled ? "Frequency (Controlled by CV/Note)" : "Frequency"}
           min={20}
           max={2000}
           step={1}
           defaultValue={data.frequency || 440}
           onChange={handleFrequencyChange}
+          disabled={isFrequencyControlled}
         />
       </Box>
       <Box sx={{ mt: 2 }}>
