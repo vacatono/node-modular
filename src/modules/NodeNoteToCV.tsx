@@ -34,6 +34,8 @@ class NoteToCVNode extends Tone.ToneAudioNode {
   private noteInput: Tone.Signal;
   private octaveMultiplier: Tone.Multiply;
   private tuningMultiplier: Tone.Multiply;
+  private normalizerSub: Tone.Add;
+  private normalizerMult: Tone.Multiply;
   private cvOutput: Tone.Signal;
   private octaveOffset: number;
   private tuning: number;
@@ -55,13 +57,22 @@ class NoteToCVNode extends Tone.ToneAudioNode {
     const tuningValue = Math.pow(2, this.tuning / 1200);
     this.tuningMultiplier = new Tone.Multiply(tuningValue);
 
+    // 正規化用のノード (20Hz - 2000Hz -> 0.0 - 1.0)
+    // これは受信側のVCOがTone.Scale(20, 2000)を行うことを想定しています
+    const min = 20;
+    const max = 2000;
+    this.normalizerSub = new Tone.Add(-min);
+    this.normalizerMult = new Tone.Multiply(1 / (max - min));
+
     // 出力信号（CV）
     this.cvOutput = new Tone.Signal(0);
 
-    // 信号チェーンを構築: noteInput -> octaveMultiplier -> tuningMultiplier -> cvOutput
+    // 信号チェーンを構築: noteInput -> octaveMultiplier -> tuningMultiplier -> normalizerSub -> normalizerMult -> cvOutput
     this.noteInput.connect(this.octaveMultiplier);
     this.octaveMultiplier.connect(this.tuningMultiplier);
-    this.tuningMultiplier.connect(this.cvOutput);
+    this.tuningMultiplier.connect(this.normalizerSub);
+    this.normalizerSub.connect(this.normalizerMult);
+    this.normalizerMult.connect(this.cvOutput);
   }
 
   /**
@@ -126,6 +137,8 @@ class NoteToCVNode extends Tone.ToneAudioNode {
     this.noteInput.dispose();
     this.octaveMultiplier.dispose();
     this.tuningMultiplier.dispose();
+    this.normalizerSub.dispose();
+    this.normalizerMult.dispose();
     this.cvOutput.dispose();
     super.dispose();
     return this;

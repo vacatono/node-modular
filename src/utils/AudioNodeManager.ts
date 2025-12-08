@@ -105,6 +105,17 @@ export class AudioNodeManager {
         targetProperty,
       });
 
+      // 具体的なソースノードを特定（SequencerのNote/Gate出力など）
+      let actualSourceNode: any = sourceNode;
+      if (sourceProperty && sourceProperty !== 'output') {
+        // @ts-ignore
+        const specificSource = sourceNode[sourceProperty];
+        if (specificSource && typeof specificSource.connect === 'function') {
+          actualSourceNode = specificSource;
+          console.log(`[DEBUG] Using specific source property: ${sourceProperty}`);
+        }
+      }
+
       // 信号タイプに基づいて接続処理を分岐
       if (targetType === 'gate') {
         // Gate信号: トリガー接続
@@ -151,7 +162,7 @@ export class AudioNodeManager {
                  const scale = new Tone.Scale(min, max);
                  
                  // LFOの出力をScaleに接続
-                 sourceNode.connect(scale);
+                 actualSourceNode.connect(scale);
                  
                  // Scaleの出力をターゲットプロパティに接続
                  if (typeof targetProp.connect === 'function') {
@@ -163,14 +174,14 @@ export class AudioNodeManager {
                      scale.connect(targetProp);
                    } catch (error) {
                      console.error(`[DEBUG] Failed to connect scale to ${targetProperty}:`, error);
-                     sourceNode.connect(targetProp);
+                     actualSourceNode.connect(targetProp);
                    }
                  }
                  console.log(`[DEBUG] Connected CV (output) with scale [${min}, ${max}] to ${targetProperty}`);
                } else {
                  // パラメータ定義がない場合: 直接接続
                  if (typeof targetProp.connect === 'function') {
-                   sourceNode.connect(targetProp);
+                   actualSourceNode.connect(targetProp);
                    console.log(`[DEBUG] Connected CV (output) directly to ${targetProperty} (no params defined)`);
                  } else {
                    console.warn(`[DEBUG] Target property ${targetProperty} does not have connect method`);
@@ -178,7 +189,7 @@ export class AudioNodeManager {
                }
              } else {
                // ターゲットプロパティがない場合、ノード全体に接続
-               sourceNode.connect(targetNode);
+               actualSourceNode.connect(targetNode);
                console.log(`[DEBUG] Connected CV (output) directly to target node`);
              }
           } else {
@@ -198,11 +209,11 @@ export class AudioNodeManager {
             // @ts-ignore: input may be ToneAudioNode or Param
             if (targetInput && typeof targetInput.connect === 'function') {
               // 入力ノードに接続
-              sourceNode.connect(targetInput);
+              actualSourceNode.connect(targetInput);
               console.log(`Connected ${targetType} signal to input`);
             } else {
               // inputプロパティがない場合、ノード全体に接続
-              sourceNode.connect(targetNode);
+              actualSourceNode.connect(targetNode);
               console.log(`Connected ${targetType} signal to target node`);
             }
           } else {
@@ -219,7 +230,7 @@ export class AudioNodeManager {
             if (targetParam && typeof targetParam.connect === 'function') {
               if (targetType === 'note') {
                 // Note信号: 直接接続（周波数値として）
-                sourceNode.connect(targetParam);
+                actualSourceNode.connect(targetParam);
                 console.log(`Connected Note signal directly to ${targetProperty}`);
               } else {
                 // CV信号
@@ -231,13 +242,13 @@ export class AudioNodeManager {
                   const { min, max } = paramDef;
                   const scale = new Tone.Scale(min, max);
                   
-                  sourceNode.connect(scale);
+                  actualSourceNode.connect(scale);
                   scale.connect(targetParam);
                   
                   console.log(`Connected CV with scale [${min}, ${max}] to ${targetProperty}`);
                 } else {
                   // CV信号でパラメータ定義がない場合: 直接接続
-                  sourceNode.connect(targetParam);
+                  actualSourceNode.connect(targetParam);
                   console.log(`Connected CV directly to ${targetProperty} (no params defined)`);
                 }
               }
@@ -248,7 +259,7 @@ export class AudioNodeManager {
         }
       } else if (targetType === 'audio') {
         // Audio信号: 通常のオーディオ接続
-        sourceNode.connect(targetNode);
+        actualSourceNode.connect(targetNode);
         console.log('Connected audio nodes directly');
       } else {
         console.warn('Unknown signal type:', { sourceType, targetType });

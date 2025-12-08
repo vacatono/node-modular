@@ -64,6 +64,7 @@ class SequencerNode extends Tone.ToneAudioNode {
 
             // ノート出力（周波数値を送信）
             this.noteOutput.setValueAtTime(frequency, time);
+            console.log('[DEBUG] Sequencer step note:', note, 'freq:', frequency);
 
             // ゲート出力
             this.gateOutput.gain.setValueAtTime(1, time);
@@ -121,6 +122,20 @@ class SequencerNode extends Tone.ToneAudioNode {
    * 出力ノード
    */
   get output(): Tone.ToneAudioNode {
+    return this.gateOutput;
+  }
+
+  /**
+   * Note出力ノードへのアクセス
+   */
+  get note(): Tone.Signal {
+    return this.noteOutput;
+  }
+
+  /**
+   * Gate出力ノードへのアクセス
+   */
+  get gate(): Tone.Gain {
     return this.gateOutput;
   }
 
@@ -236,7 +251,7 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       tempo,
       edgesCount: data.edges?.length || 0,
     });
-    
+
     // シーケンサーの初期化
     sequencer.current = new SequencerNode({
       steps,
@@ -365,14 +380,20 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       console.log('[DEBUG] Starting sequencer...');
       await Tone.start();
       console.log('[DEBUG] Tone.start() completed');
-      Tone.Transport.start();
-      console.log('[DEBUG] Tone.Transport.start() called');
+
+      // Schedule the sequence before starting the transport
       sequencer.current?.start();
       console.log('[DEBUG] sequencer.start() called');
+
+      Tone.Transport.start();
+      console.log('[DEBUG] Tone.Transport.start() called');
     } else {
       console.log('[DEBUG] Stopping sequencer...');
-      Tone.Transport.stop();
+
+      // Stop the sequence before stopping the transport to avoid timing errors
       sequencer.current?.stop();
+      Tone.Transport.stop();
+
       setCurrentStep(-1);
     }
     setIsPlaying(!isPlaying);
