@@ -48,7 +48,7 @@ const nodeTypes: NodeTypes = {
 };
 
 // 初期ノードを定義
-const initialNodes: Node[] = presetTemplates[0].nodes;
+const initialNodes: Node[] = presetTemplates[0].nodes.map((node) => ({ ...node, dragHandle: '.custom-drag-handle' }));
 
 // 初期エッジを定義
 const initialEdges: Edge[] = presetTemplates[0].edges;
@@ -56,8 +56,6 @@ const initialEdges: Edge[] = presetTemplates[0].edges;
 const NodeEditor = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [panOnDrag, setPanOnDrag] = useState(true);
   const isApplyingTemplate = useRef(false);
   const templateEdgesToProcess = useRef<Edge[]>([]);
 
@@ -299,6 +297,8 @@ const NodeEditor = () => {
       const newNode: Node = {
         id: `${type}-${Date.now()}`,
         type,
+
+        dragHandle: '.custom-drag-handle',
         position: { x: 100, y: 100 },
         data: {
           label: type === 'amplitudeEnvelope' ? 'ENVELOPE' : type.toUpperCase(),
@@ -316,30 +316,6 @@ const NodeEditor = () => {
     [setNodes, edges]
   );
 
-  // ノードクリック時のハンドラ
-  const onNodeClick = useCallback(
-    (event: React.MouseEvent, node: Node) => {
-      setSelectedNodeId(node.id);
-      setPanOnDrag(false);
-      setNodes((nds) => nds.map((n) => (n.id === node.id ? { ...n, draggable: false } : { ...n, draggable: true })));
-    },
-    [setNodes]
-  );
-
-  // ノード外クリック時のハンドラ
-  const onPaneClick = useCallback(() => {
-    setSelectedNodeId(null);
-    setPanOnDrag(true);
-    setNodes((nds) => nds.map((n) => ({ ...n, draggable: true })));
-  }, [setNodes]);
-
-  // ノードの色を選択状態で変える
-  const getNodeStyle = (node: Node) => ({
-    border: selectedNodeId === node.id ? '2px solid #1976d2' : '1px solid #ccc',
-    background: selectedNodeId === node.id ? '#f3f9ff' : 'white',
-    borderRadius: 8,
-    boxShadow: selectedNodeId === node.id ? '0 0 0 3px #b0daf9' : 'none',
-  });
 
   /**
    * テンプレート適用時のハンドラ
@@ -350,7 +326,7 @@ const NodeEditor = () => {
       isApplyingTemplate.current = true;
       templateEdgesToProcess.current = template.edges;
 
-      setNodes(template.nodes);
+      setNodes(template.nodes.map((n) => ({ ...n, dragHandle: '.custom-drag-handle' })));
       setEdges(template.edges);
     },
     [setNodes, setEdges]
@@ -413,11 +389,10 @@ const NodeEditor = () => {
         <ReactFlow
           nodes={nodes.map((node) => ({
             ...node,
-            style: getNodeStyle(node),
+            style: { border: '1px solid #ccc', background: 'white', borderRadius: 8 },
             data: {
               ...node.data,
               edges,
-              draggable: selectedNodeId !== node.id,
               registerAudioNode,
               debug,
             },
@@ -436,9 +411,6 @@ const NodeEditor = () => {
           minZoom={0.1}
           maxZoom={2}
           defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-          onNodeClick={onNodeClick}
-          onPaneClick={onPaneClick}
-          panOnDrag={panOnDrag}
           isValidConnection={isValidConnection}
         >
           <Background />

@@ -220,6 +220,7 @@ const NodeBox = ({
         </>
       )}
       <Box
+        className="custom-drag-handle"
         sx={{
           backgroundColor: green[50],
           color: green[900],
@@ -227,6 +228,7 @@ const NodeBox = ({
           py: 1,
           borderRadius: '4px',
           userSelect: 'none',
+          cursor: 'grab',
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -237,7 +239,7 @@ const NodeBox = ({
         </Box>
       </Box>
       {children}
-    </Box>
+    </Box >
   );
 };
 
