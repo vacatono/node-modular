@@ -14,7 +14,7 @@ interface NodeLFOProps {
     frequency?: number;
     type?: Tone.ToneOscillatorType;
     amplitude?: number;
-    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
+    registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode, _params?: Record<string, { min: number; max: number }>) => void;
     edges?: Edge[];
   };
   id: string;
@@ -47,7 +47,10 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
     // 50ms遅延させて登録
     const timer = setTimeout(() => {
       if (lfo.current) {
-        data.registerAudioNode(id, lfo.current);
+        data.registerAudioNode(id, lfo.current, {
+          frequency: { min: 0.1, max: 20 },
+          amplitude: { min: 0, max: 1 },
+        });
       }
     }, 50);
     return () => clearTimeout(timer);
@@ -72,7 +75,18 @@ const NodeLFO = ({ data, id }: NodeLFOProps) => {
   }, []);
 
   return (
-    <NodeBox id={id} label={data.label} hasInputHandle={false}>
+    <NodeBox 
+      id={id} 
+      label={data.label} 
+      hasInputHandle={false}
+      hasOutputHandle={false}
+      hasControl1Handle={true}
+      control1Target={{
+        label: 'CV Out',
+        property: 'output',
+        isSource: true,
+      }}
+    >
       <Box sx={{ mt: 2 }}>
         <CustomSlider
           label="Frequency"
