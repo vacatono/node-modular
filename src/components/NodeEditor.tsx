@@ -30,7 +30,7 @@ import NodeSequencer from '@/modules/NodeSequencer';
 import NodeNoteToCV from '@/modules/NodeNoteToCV';
 import NodeKeyboard from '@/modules/NodeKeyboard';
 
-const debug = true;
+const debug = false;
 
 // ノードの種類を定義
 const nodeTypes: NodeTypes = {
