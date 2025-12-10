@@ -61,39 +61,25 @@ class SequencerNode extends Tone.ToneAudioNode {
         this.grid.forEach((row, rowIndex) => {
           if (row[step]) {
             const note = this.keys[rowIndex];
-            const frequency = Tone.Frequency(note).toFrequency();
-
-            // ノート出力（周波数値を送信） - 旧シグナル方式（後方互換性のため残すか、完全に切り替えるか）
-            // this.noteOutput.setValueAtTime(frequency, time);
-            // console.log('[DEBUG] Sequencer step note:', note, 'freq:', frequency);
 
             // Note Event Emission
-            console.log(`[DEBUG] Sequencer emitting note: ${note}. Connected targets: ${this.connectedNotes.length}`);
-            this.connectedNotes.forEach((target, index) => {
-              const hasSetNote = typeof target.setNote === 'function';
-              console.log(`[DEBUG] Target ${index}:`, target.constructor.name, 'hasSetNote:', hasSetNote);
-              if (hasSetNote) {
-                target.setNote(note);
+            this.connectedNotes.forEach((target) => {
+              if (typeof target.setNote === 'function') {
+                target.setNote(note, time);
               }
             });
 
-            // ゲート出力
-            this.gateOutput.gain.setValueAtTime(1, time);
-            this.gateOutput.gain.setValueAtTime(0, time + 0.1);
+            // Gate Delay (50ms) to avoid overlapping with note change
+            const gateTime = time + 0.05;
 
-            // トリガー接続（Envelope等をトリガー）
-            console.log('[DEBUG] Sequencer step - connectedTriggers count:', this.connectedTriggers.length);
-            this.connectedTriggers.forEach((target, index) => {
-              console.log(`[DEBUG] Trigger ${index}:`, {
-                target: target,
-                hasTriggerAttackRelease: typeof target?.triggerAttackRelease === 'function',
-              });
+            // ゲート出力
+            this.gateOutput.gain.setValueAtTime(1, gateTime);
+            this.gateOutput.gain.setValueAtTime(0, gateTime + 0.1);
+
+            // トリガー接続
+            this.connectedTriggers.forEach((target) => {
               if (target && typeof target.triggerAttackRelease === 'function') {
-                // 16分音符分の長さでトリガー
-                target.triggerAttackRelease('16n', time);
-                console.log(`[DEBUG] triggerAttackRelease called on target ${index}`);
-              } else {
-                console.warn(`[DEBUG] Target ${index} does not have triggerAttackRelease method`);
+                target.triggerAttackRelease('16n', gateTime);
               }
             });
           }
@@ -108,6 +94,10 @@ class SequencerNode extends Tone.ToneAudioNode {
       Array.from({ length: this.steps }, (_, i) => i),
       '4n'
     );
+
+    // シーケンスを常にトランスポートに同期して開始状態にする
+    // 実際の再生/停止はTone.Transport.start()/stop()で制御する
+    this.sequence.start(0);
 
     // テンポの設定
     if (options.tempo) {
@@ -156,7 +146,6 @@ class SequencerNode extends Tone.ToneAudioNode {
   connectNote(target: any): void {
     if (!this.connectedNotes.includes(target)) {
       this.connectedNotes.push(target);
-      console.log('[DEBUG] Connected Note event target:', target);
     }
   }
 
@@ -169,20 +158,10 @@ class SequencerNode extends Tone.ToneAudioNode {
 
   /**
    * トリガー出力先として登録
-   * AudioNodeManagerから呼び出される
    */
   connectTrigger(target: any): void {
-    console.log('[DEBUG] SequencerNode.connectTrigger called:', {
-      target: target,
-      targetType: target?.constructor?.name,
-      hasTriggerAttackRelease: typeof target?.triggerAttackRelease === 'function',
-      currentTriggers: this.connectedTriggers.length,
-    });
     if (!this.connectedTriggers.includes(target)) {
       this.connectedTriggers.push(target);
-      console.log('[DEBUG] Target added to connectedTriggers. New count:', this.connectedTriggers.length);
-    } else {
-      console.log('[DEBUG] Target already in connectedTriggers');
     }
   }
 
@@ -202,20 +181,17 @@ class SequencerNode extends Tone.ToneAudioNode {
   }
 
   /**
-   * シーケンスの開始
+   * シーケンスの開始 (Transport制御に委譲するため何もしない)
    */
   start(): void {
-    console.log('[DEBUG] SequencerNode.start() called');
-    console.log('[DEBUG] connectedTriggers count:', this.connectedTriggers.length);
-    this.sequence.start(0);
-    console.log('[DEBUG] sequence.start() called');
+    // this.sequence.start(0); // Constructorで開始済み
   }
 
   /**
-   * シーケンスの停止
+   * シーケンスの停止 (Transport制御に委譲するため何もしない)
    */
   stop(): void {
-    this.sequence.stop();
+    // this.sequence.stop(); 
   }
 
   /**
@@ -247,7 +223,8 @@ interface NodeSequencerProps {
  * シーケンサーノードコンポーネント
  */
 const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
-  const sequencer = useRef<SequencerNode | null>(null);
+  // useRefではなくuseStateを使用して、インスタンス再作成時に再レンダリングとEffect発火を確実にする
+  const [sequencerNode, setSequencerNode] = useState<SequencerNode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [tempo, setTempo] = useState(data.tempo || 120);
   const [steps, setSteps] = useState(data.steps || 8);
@@ -257,41 +234,47 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   const [editingKeyValue, setEditingKeyValue] = useState<string>('');
   const [currentStep, setCurrentStep] = useState<number>(-1);
 
+  // SequencerNodeの参照を保持するためのRef (イベントハンドラ内でのアクセス用)
+  const sequencerRef = useRef<SequencerNode | null>(null);
+
+  useEffect(() => {
+    sequencerRef.current = sequencerNode;
+  }, [sequencerNode]);
+
   useEffect(() => {
     console.log('[DEBUG] NodeSequencer useEffect - creating new instance:', {
       id,
       steps,
       keysLength: keys.length,
       tempo,
-      edgesCount: data.edges?.length || 0,
     });
 
     // シーケンサーの初期化
-    sequencer.current = new SequencerNode({
+    const newSequencer = new SequencerNode({
       steps,
       keys,
       tempo,
       onStep: (step) => setCurrentStep(step),
     });
 
-    console.log('[DEBUG] NodeSequencer - new instance created');
+    // React側のグリッド状態を新しく作成したインスタンスに適用
+    newSequencer.setGrid(grid);
 
-    // オーディオノードの登録（useEffectの外で呼び出す）
-    // registerAudioNodeは別のuseEffectで呼び出す
+    setSequencerNode(newSequencer);
 
     return () => {
       console.log('[DEBUG] NodeSequencer useEffect cleanup - disposing instance');
-      sequencer.current?.dispose();
+      newSequencer.dispose();
     };
   }, [id, steps, keys, tempo]);
 
-  // オーディオノードの登録（registerAudioNodeの変更に依存しない）
+  // オーディオノードの登録
   useEffect(() => {
-    if (sequencer.current) {
+    if (sequencerNode) {
       console.log('[DEBUG] NodeSequencer - registering audio node');
-      data.registerAudioNode(id, sequencer.current);
+      data.registerAudioNode(id, sequencerNode);
     }
-  }, [id, data.registerAudioNode]);
+  }, [id, data.registerAudioNode, sequencerNode]); // sequencerNodeを依存配列に追加
 
   // キー名変更ハンドラ
   const handleKeyChange = useCallback((index: number, newKey: string) => {
@@ -308,8 +291,8 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
         setKeys((prevKeys) => {
           const newKeys = [...prevKeys];
           newKeys[index] = editingKeyValue;
-          if (sequencer.current) {
-            sequencer.current.setKeys(newKeys);
+          if (sequencerRef.current) {
+            sequencerRef.current.setKeys(newKeys);
           }
           return newKeys;
         });
@@ -381,8 +364,8 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       });
       // クリックされたセルがオンの場合はオフに、オフの場合はオンにする
       newGrid[rowIndex][colIndex] = !prevGrid[rowIndex][colIndex];
-      if (sequencer.current) {
-        sequencer.current.setGrid(newGrid);
+      if (sequencerRef.current) {
+        sequencerRef.current.setGrid(newGrid);
       }
       return newGrid;
     });
@@ -391,22 +374,19 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
   // 再生/停止ハンドラ
   const handlePlayToggle = useCallback(async () => {
     if (!isPlaying) {
-      console.log('[DEBUG] Starting sequencer...');
+      console.log('[DEBUG] Starting sequencer (Transport Global)...');
       await Tone.start();
-      console.log('[DEBUG] Tone.start() completed');
 
-      // Schedule the sequence before starting the transport
-      sequencer.current?.start();
-      console.log('[DEBUG] sequencer.start() called');
-
-      Tone.Transport.start();
-      console.log('[DEBUG] Tone.Transport.start() called');
-    } else {
-      console.log('[DEBUG] Stopping sequencer...');
-
-      // Stop the sequence before stopping the transport to avoid timing errors
-      sequencer.current?.stop();
+      // Transportをリセットして開始
       Tone.Transport.stop();
+      Tone.Transport.position = 0;
+      Tone.Transport.start();
+    } else {
+      console.log('[DEBUG] Stopping sequencer (Transport Global)...');
+
+      // Transportを停止してリセット
+      Tone.Transport.stop();
+      Tone.Transport.position = 0;
 
       setCurrentStep(-1);
     }
