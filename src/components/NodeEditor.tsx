@@ -29,6 +29,11 @@ import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
 import NodeSequencer from '@/modules/NodeSequencer';
 import NodeNoteToCV from '@/modules/NodeNoteToCV';
 import NodeKeyboard from '@/modules/NodeKeyboard';
+import NodeAMSynth from '@/modules/NodeAMSynth';
+import NodeFMSynth from '@/modules/NodeFMSynth';
+import NodeMonoSynth from '@/modules/NodeMonoSynth';
+import NodeMembraneSynth from '@/modules/NodeMembraneSynth';
+import NodeNoiseSynth from '@/modules/NodeNoiseSynth';
 
 const debug = false;
 
@@ -45,6 +50,11 @@ const nodeTypes: NodeTypes = {
   sequencer: NodeSequencer,
   noteToCV: NodeNoteToCV,
   keyboard: NodeKeyboard,
+  amSynth: NodeAMSynth,
+  fmSynth: NodeFMSynth,
+  monoSynth: NodeMonoSynth,
+  membraneSynth: NodeMembraneSynth,
+  noiseSynth: NodeNoiseSynth,
 };
 
 // 初期ノードを定義
@@ -365,6 +375,21 @@ const NodeEditor = () => {
           </Button>
           <Button variant="contained" onClick={() => addNode('keyboard')}>
             Add Keyboard
+          </Button>
+          <Button variant="contained" onClick={() => addNode('amSynth')}>
+            Add AM Synth
+          </Button>
+          <Button variant="contained" onClick={() => addNode('fmSynth')}>
+            Add FM Synth
+          </Button>
+          <Button variant="contained" onClick={() => addNode('monoSynth')}>
+            Add Mono Synth
+          </Button>
+          <Button variant="contained" onClick={() => addNode('membraneSynth')}>
+            Add Membrane
+          </Button>
+          <Button variant="contained" onClick={() => addNode('noiseSynth')}>
+            Add Noise
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
