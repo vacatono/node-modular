@@ -22,6 +22,10 @@ class KeyboardNode extends Tone.ToneAudioNode {
   private connectedTriggers: any[] = []; // 接続されたTriggerイベントターゲットのリスト
   private _dummyInput = new Tone.Gain(); // Abstractクラスの要件を満たすためのダミー入力
 
+  private isPressed: boolean = false;
+  private isHold: boolean = false;
+  private lastGateState: boolean = false;
+
   constructor() {
     super();
     // ゲート出力: 押されている間は1、離すと0
@@ -41,48 +45,72 @@ class KeyboardNode extends Tone.ToneAudioNode {
   }
 
   /**
+   * ホールド状態の設定
+   */
+  setHold(enabled: boolean) {
+    this.isHold = enabled;
+    this.updateGate();
+  }
+
+  /**
+   * ゲート状態の更新
+   */
+  private updateGate() {
+    const isGateActive = this.isPressed || this.isHold;
+
+    if (isGateActive !== this.lastGateState) {
+      this.lastGateState = isGateActive;
+      const now = Tone.now();
+
+      if (isGateActive) {
+        // Gate High
+        this.gateOutput.gain.cancelScheduledValues(now);
+        this.gateOutput.gain.setValueAtTime(1, now);
+
+        // Trigger Attack on connected targets
+        this.connectedTriggers.forEach((target) => {
+          if (typeof target.triggerAttack === 'function') {
+            target.triggerAttack(now);
+          }
+        });
+      } else {
+        // Gate Low
+        this.gateOutput.gain.cancelScheduledValues(now);
+        this.gateOutput.gain.setValueAtTime(0, now);
+
+        // Trigger Release on connected targets
+        this.connectedTriggers.forEach((target) => {
+          if (typeof target.triggerRelease === 'function') {
+            target.triggerRelease(now);
+          }
+        });
+      }
+    }
+  }
+
+  /**
    * ノートオン (Attack)
    * @param note ノート名 (例: "C4")
    */
   triggerAttack(note: string) {
     // Noteイベントの発行
-    console.log(`[DEBUG] Keyboard triggerAttack: ${note}. Targets: ${this.connectedNotes.length}, Target IDs: ${this.connectedNotes.map(t => t.constructor.name).join(', ')}`);
+    console.log(`[DEBUG] Keyboard triggerAttack: ${note}. Targets: ${this.connectedNotes.length}`);
     this.connectedNotes.forEach((target) => {
       if (typeof target.setNote === 'function') {
         target.setNote(note);
       }
     });
 
-    // GateをHighにする
-    this.gateOutput.gain.cancelScheduledValues(Tone.now());
-    this.gateOutput.gain.setValueAtTime(1, Tone.now());
-
-    // Trigger接続されたターゲットをトリガー
-    this.connectedTriggers.forEach((target) => {
-      if (typeof target.triggerAttack === 'function') {
-        target.triggerAttack(Tone.now());
-      } else if (typeof target.triggerAttackRelease === 'function') {
-        // フォールバック: triggerAttackがない場合はtriggerAttackReleaseを使用 (短音)
-        // target.triggerAttackRelease('8n', Tone.now());
-        // しかし、キーボードは押している間鳴ってほしいので、triggerAttackが望ましい
-      }
-    });
+    this.isPressed = true;
+    this.updateGate();
   }
 
   /**
    * ノートオフ (Release)
    */
   triggerRelease() {
-    // GateをLowにする
-    this.gateOutput.gain.cancelScheduledValues(Tone.now());
-    this.gateOutput.gain.setValueAtTime(0, Tone.now());
-
-    // Trigger接続されたターゲットをリリース
-    this.connectedTriggers.forEach((target) => {
-      if (typeof target.triggerRelease === 'function') {
-        target.triggerRelease(Tone.now());
-      }
-    });
+    this.isPressed = false;
+    this.updateGate();
   }
 
   /**
@@ -140,6 +168,7 @@ const KEYS = [
 const NodeKeyboard = ({ data, id }: NodeProps) => {
   const keyboardNode = useRef<KeyboardNode | null>(null);
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [isHold, setIsHold] = useState(false);
 
   useEffect(() => {
     keyboardNode.current = new KeyboardNode();
@@ -160,11 +189,13 @@ const NodeKeyboard = ({ data, id }: NodeProps) => {
   }, []);
 
   const handleMouseUp = useCallback(() => {
-    setActiveKey(null);
+    if (!isHold) {
+      setActiveKey(null);
+    }
     if (keyboardNode.current) {
       keyboardNode.current.triggerRelease();
     }
-  }, []);
+  }, [isHold]);
 
   return (
     <NodeBox
@@ -180,18 +211,21 @@ const NodeKeyboard = ({ data, id }: NodeProps) => {
       }}
     >
       <Button
-        variant="contained"
-        size="small"
+        variant={isHold ? "contained" : "outlined"}
+        color={isHold ? "secondary" : "primary"}
         onClick={() => {
-          console.log('[DEBUG] Manual Trigger C4');
+          const newHold = !isHold;
+          setIsHold(newHold);
+          if (!newHold) {
+            setActiveKey(null);
+          }
           if (keyboardNode.current) {
-            keyboardNode.current.triggerAttack('C4');
-            setTimeout(() => keyboardNode.current?.triggerRelease(), 500);
+            keyboardNode.current.setHold(newHold);
           }
         }}
-        sx={{ mb: 1, fontSize: '10px', py: 0 }}
+        sx={{ mt: 2, width: '100%' }}
       >
-        Test C4
+        HOLD
       </Button>
       <Box sx={{ position: 'relative' }}>
         {/* Gate Out Handle */}
