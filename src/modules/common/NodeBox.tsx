@@ -29,6 +29,8 @@ interface NodeBoxProps {
     isSource?: boolean;
   };
   draggable?: boolean;
+  width?: number | string;
+  sx?: any;
 }
 
 const NodeBox = ({
@@ -44,6 +46,8 @@ const NodeBox = ({
   control1Target,
   control2Target,
   control3Target,
+  width,
+  sx = {},
 }: NodeBoxProps) => {
   const { setNodes } = useReactFlow();
 
@@ -76,7 +80,8 @@ const NodeBox = ({
     <Box
       sx={{
         padding: 2,
-        minWidth: 200,
+        minWidth: width || 200,
+        ...sx,
       }}
     >
       {hasOutputHandle && (

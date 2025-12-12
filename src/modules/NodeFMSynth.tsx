@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Typography, Grid } from '@mui/material';
 import CustomSlider from './common/CustomSlider';
 import NodeBox from './common/NodeBox';
 
@@ -15,6 +15,7 @@ class FMSynthNode extends Tone.ToneAudioNode {
     modulationIndex?: number;
     detune?: number;
     oscillatorType?: Tone.ToneOscillatorType;
+    modulationType?: Tone.ToneOscillatorType;
   } = {}) {
     super();
     this.synth = new Tone.FMSynth({
@@ -31,7 +32,7 @@ class FMSynthNode extends Tone.ToneAudioNode {
         release: 0.8
       },
       modulation: {
-        type: 'square'
+        type: (options.modulationType || 'square') as any
       },
       modulationEnvelope: {
         attack: 0.5,
@@ -88,6 +89,38 @@ class FMSynthNode extends Tone.ToneAudioNode {
     this.synth.oscillator.type = type;
   }
 
+  setModulationType(type: Tone.ToneOscillatorType): void {
+    this.synth.modulation.type = type;
+  }
+
+  // Envelope Setters
+  setEnvelopeAttack(value: number): void {
+    this.synth.envelope.attack = value;
+  }
+  setEnvelopeDecay(value: number): void {
+    this.synth.envelope.decay = value;
+  }
+  setEnvelopeSustain(value: number): void {
+    this.synth.envelope.sustain = value;
+  }
+  setEnvelopeRelease(value: number): void {
+    this.synth.envelope.release = value;
+  }
+
+  // Modulation Envelope Setters
+  setModEnvelopeAttack(value: number): void {
+    this.synth.modulationEnvelope.attack = value;
+  }
+  setModEnvelopeDecay(value: number): void {
+    this.synth.modulationEnvelope.decay = value;
+  }
+  setModEnvelopeSustain(value: number): void {
+    this.synth.modulationEnvelope.sustain = value;
+  }
+  setModEnvelopeRelease(value: number): void {
+    this.synth.modulationEnvelope.release = value;
+  }
+
   dispose(): this {
     this.synth.dispose();
     super.dispose();
@@ -101,6 +134,7 @@ interface NodeFMSynthProps {
     harmonicity?: number;
     modulationIndex?: number;
     oscillatorType?: Tone.ToneOscillatorType;
+    modulationType?: Tone.ToneOscillatorType;
     registerAudioNode: (_nodeId: string, _audioNode: Tone.ToneAudioNode) => void;
   };
   id: string;
@@ -114,6 +148,7 @@ const NodeFMSynth = ({ data, id }: NodeFMSynthProps) => {
       harmonicity: data.harmonicity,
       modulationIndex: data.modulationIndex,
       oscillatorType: data.oscillatorType,
+      modulationType: data.modulationType,
     });
 
     data.registerAudioNode(id, synthNode.current);
@@ -122,6 +157,13 @@ const NodeFMSynth = ({ data, id }: NodeFMSynthProps) => {
       synthNode.current?.dispose();
     };
   }, [id, data.registerAudioNode]);
+
+  // Oscillator Handlers
+  const handleOscTypeChange = useCallback((event: SelectChangeEvent) => {
+    if (synthNode.current) {
+      synthNode.current.setOscillatorType(event.target.value as Tone.ToneOscillatorType);
+    }
+  }, []);
 
   const handleHarmonicityChange = useCallback((value: number | number[]) => {
     if (synthNode.current && typeof value === 'number') {
@@ -135,16 +177,30 @@ const NodeFMSynth = ({ data, id }: NodeFMSynthProps) => {
     }
   }, []);
 
-  const handleTypeChange = useCallback((event: SelectChangeEvent) => {
+  // Modulation Type Handler
+  const handleModTypeChange = useCallback((event: SelectChangeEvent) => {
     if (synthNode.current) {
-      synthNode.current.setOscillatorType(event.target.value as Tone.ToneOscillatorType);
+      synthNode.current.setModulationType(event.target.value as Tone.ToneOscillatorType);
     }
   }, []);
+
+  // Envelope Handlers
+  const handleEnvAttackChange = useCallback((v: number | number[]) => synthNode.current?.setEnvelopeAttack(v as number), []);
+  const handleEnvDecayChange = useCallback((v: number | number[]) => synthNode.current?.setEnvelopeDecay(v as number), []);
+  const handleEnvSustainChange = useCallback((v: number | number[]) => synthNode.current?.setEnvelopeSustain(v as number), []);
+  const handleEnvReleaseChange = useCallback((v: number | number[]) => synthNode.current?.setEnvelopeRelease(v as number), []);
+
+  // Modulation Envelope Handlers
+  const handleModEnvAttackChange = useCallback((v: number | number[]) => synthNode.current?.setModEnvelopeAttack(v as number), []);
+  const handleModEnvDecayChange = useCallback((v: number | number[]) => synthNode.current?.setModEnvelopeDecay(v as number), []);
+  const handleModEnvSustainChange = useCallback((v: number | number[]) => synthNode.current?.setModEnvelopeSustain(v as number), []);
+  const handleModEnvReleaseChange = useCallback((v: number | number[]) => synthNode.current?.setModEnvelopeRelease(v as number), []);
 
   return (
     <NodeBox
       id={id}
       label={data.label || "FM Synth"}
+      width={460} // doubled width
       hasInputHandle={false}
       hasOutputHandle={true}
       hasControl1Handle={true}
@@ -152,37 +208,76 @@ const NodeFMSynth = ({ data, id }: NodeFMSynthProps) => {
       hasControl2Handle={true}
       control2Target={{ label: 'Note In', property: 'note', isSource: false }}
     >
-      <Box sx={{ mt: 2 }}>
-        <FormControl fullWidth size="small">
-          <InputLabel>Osc Type</InputLabel>
-          <Select defaultValue={data.oscillatorType || 'sine'} onChange={handleTypeChange}>
-            <MenuItem value="sine">Sine</MenuItem>
-            <MenuItem value="square">Square</MenuItem>
-            <MenuItem value="triangle">Triangle</MenuItem>
-            <MenuItem value="sawtooth">Sawtooth</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-      <Box sx={{ mt: 2 }}>
-        <CustomSlider
-          label="Harmonicity"
-          min={0}
-          max={10}
-          step={0.1}
-          defaultValue={data.harmonicity || 3}
-          onChange={handleHarmonicityChange}
-        />
-      </Box>
-      <Box sx={{ mt: 2 }}>
-        <CustomSlider
-          label="Mod Index"
-          min={0}
-          max={100}
-          step={1}
-          defaultValue={data.modulationIndex || 10}
-          onChange={handleModIndexChange}
-        />
-      </Box>
+      <Grid container spacing={2} sx={{ mt: 1 }}>
+        {/* Left Column: Oscillator (Carrier) */}
+        <Grid item xs={6}>
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#555' }}>
+            Oscillator (Carrier)
+          </Typography>
+
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Type</InputLabel>
+            <Select defaultValue={data.oscillatorType || 'sine'} onChange={handleOscTypeChange} label="Type">
+              <MenuItem value="sine">Sine</MenuItem>
+              <MenuItem value="square">Square</MenuItem>
+              <MenuItem value="triangle">Triangle</MenuItem>
+              <MenuItem value="sawtooth">Sawtooth</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Typography variant="caption" sx={{ display: 'block', mb: 1, mt: 2, fontWeight: 'bold' }}>
+            Envelope
+          </Typography>
+          <CustomSlider label="Attack" min={0} max={2} step={0.01} defaultValue={0.1} onChange={handleEnvAttackChange} />
+          <CustomSlider label="Decay" min={0} max={2} step={0.01} defaultValue={0.2} onChange={handleEnvDecayChange} />
+          <CustomSlider label="Sustain" min={0} max={1} step={0.01} defaultValue={1.0} onChange={handleEnvSustainChange} />
+          <CustomSlider label="Release" min={0} max={5} step={0.01} defaultValue={0.8} onChange={handleEnvReleaseChange} />
+        </Grid>
+
+        {/* Right Column: Modulation (Modulator) */}
+        <Grid item xs={6}>
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold', color: '#555' }}>
+            Modulation
+          </Typography>
+
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Type</InputLabel>
+            <Select defaultValue={data.modulationType || 'square'} onChange={handleModTypeChange} label="Type">
+              <MenuItem value="sine">Sine</MenuItem>
+              <MenuItem value="square">Square</MenuItem>
+              <MenuItem value="triangle">Triangle</MenuItem>
+              <MenuItem value="sawtooth">Sawtooth</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Typography variant="caption" sx={{ display: 'block', mb: 1, mt: 2, fontWeight: 'bold' }}>
+            Mod Envelope
+          </Typography>
+          <CustomSlider label="Attack" min={0} max={2} step={0.01} defaultValue={0.5} onChange={handleModEnvAttackChange} />
+          <CustomSlider label="Decay" min={0} max={2} step={0.01} defaultValue={0} onChange={handleModEnvDecayChange} />
+          <CustomSlider label="Sustain" min={0} max={1} step={0.01} defaultValue={1} onChange={handleModEnvSustainChange} />
+          <CustomSlider label="Release" min={0} max={5} step={0.01} defaultValue={0.5} onChange={handleModEnvReleaseChange} />
+
+          <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #eee' }}>
+            <CustomSlider
+              label="Harmonicity"
+              min={0}
+              max={10}
+              step={0.1}
+              defaultValue={data.harmonicity || 3}
+              onChange={handleHarmonicityChange}
+            />
+            <CustomSlider
+              label="Mod Index"
+              min={0}
+              max={100}
+              step={1}
+              defaultValue={data.modulationIndex || 10}
+              onChange={handleModIndexChange}
+            />
+          </Box>
+        </Grid>
+      </Grid>
     </NodeBox>
   );
 };

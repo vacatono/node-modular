@@ -347,49 +347,49 @@ const NodeEditor = () => {
       <Box sx={{ p: 2, borderBottom: '1px solid #ccc', backgroundColor: 'white' }}>
         <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button variant="contained" onClick={() => addNode('vco')}>
-            Add VCO
+            VCO
           </Button>
           <Button variant="contained" onClick={() => addNode('filter')}>
-            Add Filter
+            Filter
           </Button>
           <Button variant="contained" onClick={() => addNode('delay')}>
-            Add Delay
+            Delay
           </Button>
           <Button variant="contained" onClick={() => addNode('reverb')}>
-            Add Reverb
+            Reverb
           </Button>
           <Button variant="contained" onClick={() => addNode('lfo')}>
-            Add LFO
+            LFO
           </Button>
           <Button variant="contained" onClick={() => addNode('oscilloscope')}>
-            Add Oscilloscope
+            Oscilloscope
           </Button>
           <Button variant="contained" onClick={() => addNode('amplitudeEnvelope')}>
-            Add Envelope
+            Envelope
           </Button>
           <Button variant="contained" onClick={() => addNode('sequencer')}>
-            Add Sequencer
+            Sequencer
           </Button>
           <Button variant="contained" onClick={() => addNode('noteToCV')}>
-            Add Note→CV
+            Note→CV
           </Button>
           <Button variant="contained" onClick={() => addNode('keyboard')}>
-            Add Keyboard
+            Keyboard
           </Button>
           <Button variant="contained" onClick={() => addNode('amSynth')}>
-            Add AM Synth
+            AM Synth
           </Button>
           <Button variant="contained" onClick={() => addNode('fmSynth')}>
-            Add FM Synth
+            FM Synth
           </Button>
           <Button variant="contained" onClick={() => addNode('monoSynth')}>
-            Add Mono Synth
+            Mono Synth
           </Button>
           <Button variant="contained" onClick={() => addNode('membraneSynth')}>
-            Add Membrane
+            Membrane
           </Button>
           <Button variant="contained" onClick={() => addNode('noiseSynth')}>
-            Add Noise
+            Noise
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
