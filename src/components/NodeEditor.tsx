@@ -299,12 +299,16 @@ const NodeEditor = () => {
     nodesToDelete.forEach((node) => {
       audioNodeManager.deleteAudioNode(node.id);
     });
+  }, []);
 
-    // 削除されたノードに関連するエッジも削除する
-    setEdges((eds) => eds.filter(
-      (edge) => !nodesToDelete.some((node) => node.id === edge.source || node.id === edge.target)
-    ));
-  }, [setEdges]);
+  // ノードが存在しないエッジを自動的に削除する（整合性維持）
+  useEffect(() => {
+    const nodeIds = new Set(nodes.map((n) => n.id));
+    setEdges((eds) => {
+      const validEdges = eds.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
+      return validEdges.length !== eds.length ? validEdges : eds;
+    });
+  }, [nodes, setEdges]);
 
   // ノードを追加する関数
   const addNode = useCallback(
