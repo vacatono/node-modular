@@ -205,7 +205,7 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
       </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
-          label={isFrequencyControlled ? "Frequency (Controlled)" : "Frequency"}
+          label={isFrequencyControlled ? 'Frequency (Controlled)' : 'Frequency'}
           min={20}
           max={2000}
           step={1}
@@ -216,7 +216,7 @@ const NodeFilter = ({ data, id }: NodeFilterProps) => {
       </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
-          label={isQControlled ? "Resonance (Controlled)" : "Resonance"}
+          label={isQControlled ? 'Resonance (Controlled)' : 'Resonance'}
           min={0}
           max={20}
           step={0.1}

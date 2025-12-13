@@ -29,6 +29,8 @@ interface NodeBoxProps {
     isSource?: boolean;
   };
   draggable?: boolean;
+  width?: number | string;
+  sx?: any;
 }
 
 const NodeBox = ({
@@ -44,6 +46,8 @@ const NodeBox = ({
   control1Target,
   control2Target,
   control3Target,
+  width,
+  sx = {},
 }: NodeBoxProps) => {
   const { setNodes } = useReactFlow();
 
@@ -76,7 +80,8 @@ const NodeBox = ({
     <Box
       sx={{
         padding: 2,
-        minWidth: 200,
+        minWidth: width || 200,
+        ...sx,
       }}
     >
       {hasOutputHandle && (
@@ -129,8 +134,7 @@ const NodeBox = ({
             key={`${id}-control1-${control1Target.property}`}
             type={control1Target.isSource ? 'source' : 'target'}
             position={Position.Top}
-            id={`${id}-control1-${control1Target.property}-${control1Target.property === 'trigger' ? 'gate' : control1Target.property === 'note' ? 'note' : 'cv'
-              }`}
+            id={`${id}-control1-${control1Target.property}-${control1Target.property === 'trigger' ? 'gate' : control1Target.property === 'note' ? 'note' : 'cv'}`}
             style={{
               background:
                 control1Target.property === 'trigger'
@@ -163,8 +167,7 @@ const NodeBox = ({
             key={`${id}-control2-${control2Target.property}`}
             type={control2Target.isSource ? 'source' : 'target'}
             position={Position.Bottom}
-            id={`${id}-control2-${control2Target.property}-${control2Target.property === 'note' ? 'note' : control2Target.property === 'frequency' ? 'cv' : 'cv'
-              }`}
+            id={`${id}-control2-${control2Target.property}-${control2Target.property === 'note' ? 'note' : control2Target.property === 'frequency' ? 'cv' : 'cv'}`}
             style={{
               background: control2Target.property === 'note' ? '#ff9800' : '#4caf50',
               borderStyle: 'none',
@@ -193,8 +196,7 @@ const NodeBox = ({
             key={`${id}-control3-${control3Target.property}`}
             type={control3Target.isSource ? 'source' : 'target'}
             position={Position.Left}
-            id={`${id}-control3-${control3Target.property}-${control3Target.property === 'note' ? 'note' : control3Target.property === 'frequency' ? 'cv' : 'cv'
-              }`}
+            id={`${id}-control3-${control3Target.property}-${control3Target.property === 'note' ? 'note' : control3Target.property === 'frequency' ? 'cv' : 'cv'}`}
             style={{
               background: control3Target.property === 'note' ? '#ff9800' : '#4caf50',
               borderStyle: 'none',

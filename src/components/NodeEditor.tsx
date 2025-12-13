@@ -29,6 +29,11 @@ import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
 import NodeSequencer from '@/modules/NodeSequencer';
 import NodeNoteToCV from '@/modules/NodeNoteToCV';
 import NodeKeyboard from '@/modules/NodeKeyboard';
+import NodeAMSynth from '@/modules/NodeAMSynth';
+import NodeFMSynth from '@/modules/NodeFMSynth';
+import NodeMonoSynth from '@/modules/NodeMonoSynth';
+import NodeMembraneSynth from '@/modules/NodeMembraneSynth';
+import NodeNoiseSynth from '@/modules/NodeNoiseSynth';
 
 const debug = false;
 
@@ -45,6 +50,11 @@ const nodeTypes: NodeTypes = {
   sequencer: NodeSequencer,
   noteToCV: NodeNoteToCV,
   keyboard: NodeKeyboard,
+  amSynth: NodeAMSynth,
+  fmSynth: NodeFMSynth,
+  monoSynth: NodeMonoSynth,
+  membraneSynth: NodeMembraneSynth,
+  noiseSynth: NodeNoiseSynth,
 };
 
 // 初期ノードを定義
@@ -291,6 +301,15 @@ const NodeEditor = () => {
     });
   }, []);
 
+  // ノードが存在しないエッジを自動的に削除する（整合性維持）
+  useEffect(() => {
+    const nodeIds = new Set(nodes.map((n) => n.id));
+    setEdges((eds) => {
+      const validEdges = eds.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target));
+      return validEdges.length !== eds.length ? validEdges : eds;
+    });
+  }, [nodes, setEdges]);
+
   // ノードを追加する関数
   const addNode = useCallback(
     (type: string) => {
@@ -337,34 +356,49 @@ const NodeEditor = () => {
       <Box sx={{ p: 2, borderBottom: '1px solid #ccc', backgroundColor: 'white' }}>
         <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button variant="contained" onClick={() => addNode('vco')}>
-            Add VCO
+            VCO
           </Button>
           <Button variant="contained" onClick={() => addNode('filter')}>
-            Add Filter
+            Filter
           </Button>
           <Button variant="contained" onClick={() => addNode('delay')}>
-            Add Delay
+            Delay
           </Button>
           <Button variant="contained" onClick={() => addNode('reverb')}>
-            Add Reverb
+            Reverb
           </Button>
           <Button variant="contained" onClick={() => addNode('lfo')}>
-            Add LFO
+            LFO
           </Button>
           <Button variant="contained" onClick={() => addNode('oscilloscope')}>
-            Add Oscilloscope
+            Oscilloscope
           </Button>
           <Button variant="contained" onClick={() => addNode('amplitudeEnvelope')}>
-            Add Envelope
+            Envelope
           </Button>
           <Button variant="contained" onClick={() => addNode('sequencer')}>
-            Add Sequencer
+            Sequencer
           </Button>
           <Button variant="contained" onClick={() => addNode('noteToCV')}>
-            Add Note→CV
+            Note→CV
           </Button>
           <Button variant="contained" onClick={() => addNode('keyboard')}>
-            Add Keyboard
+            Keyboard
+          </Button>
+          <Button variant="contained" onClick={() => addNode('amSynth')}>
+            AM Synth
+          </Button>
+          <Button variant="contained" onClick={() => addNode('fmSynth')}>
+            FM Synth
+          </Button>
+          <Button variant="contained" onClick={() => addNode('monoSynth')}>
+            Mono Synth
+          </Button>
+          <Button variant="contained" onClick={() => addNode('membraneSynth')}>
+            Membrane
+          </Button>
+          <Button variant="contained" onClick={() => addNode('noiseSynth')}>
+            Noise
           </Button>
         </Stack>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>

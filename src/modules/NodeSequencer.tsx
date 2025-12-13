@@ -257,9 +257,6 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       onStep: (step) => setCurrentStep(step),
     });
 
-    // React側のグリッド状態を新しく作成したインスタンスに適用
-    newSequencer.setGrid(grid);
-
     setSequencerNode(newSequencer);
 
     return () => {
@@ -267,6 +264,14 @@ const NodeSequencer = ({ data, id }: NodeSequencerProps) => {
       newSequencer.dispose();
     };
   }, [id, steps, keys, tempo]);
+
+  // グリッドの状態をシーケンサー・ノードに同期するEffect
+  // これにより、gridの変更でシーケンサー全体が再作成されるのを防ぐ
+  useEffect(() => {
+    if (sequencerNode) {
+      sequencerNode.setGrid(grid);
+    }
+  }, [sequencerNode, grid]);
 
   // オーディオノードの登録
   useEffect(() => {

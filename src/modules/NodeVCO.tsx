@@ -319,6 +319,28 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
     }
   }, [id, data.registerAudioNode, data.edges]);
 
+  // エッジの変更を監視して、VCOの内部状態（接続フラグ）を更新する
+  useEffect(() => {
+    if (!vcoNode.current || !data.edges) return;
+
+    const hasCVConnection = data.edges.some(edge =>
+      edge.target === id && (
+        edge.data?.targetProperty === 'frequency' ||
+        edge.targetHandle?.includes('frequency')
+      )
+    );
+
+    const hasNoteConnection = data.edges.some(edge =>
+      edge.target === id && (
+        edge.data?.targetProperty === 'note' ||
+        edge.targetHandle?.includes('note')
+      )
+    );
+
+    vcoNode.current.setCVInputConnected(hasCVConnection);
+    vcoNode.current.setNoteInputConnected(hasNoteConnection);
+  }, [id, data.edges]);
+
   // CV入力またはNote入力が接続されているかチェック
   const isFrequencyControlled = useMemo(() => {
     if (!data.edges) return false;
@@ -391,7 +413,7 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
       </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
-          label={isFrequencyControlled ? "Frequency (Controlled by CV/Note)" : "Frequency"}
+          label={isFrequencyControlled ? 'Frequency (Controlled)' : 'Frequency'}
           min={20}
           max={2000}
           step={1}
