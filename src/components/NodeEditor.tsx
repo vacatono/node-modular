@@ -14,7 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 import * as Tone from 'tone';
 import 'reactflow/dist/style.css';
-import { Box, Button, Stack } from '@mui/material';
+import { Box } from '@mui/material';
 import NodeVCO from '../modules/NodeVCO';
 import NodeFilter from '../modules/NodeFilter';
 import NodeDelay from '../modules/NodeDelay';
@@ -22,7 +22,7 @@ import NodeReverb from '../modules/NodeReverb';
 import NodeOutput from '../modules/NodeOutput';
 import NodeLFO from '../modules/NodeLFO';
 import NodeOscilloscope from '../modules/NodeOscilloscope';
-import TemplateSelector, { FlowTemplate, presetTemplates } from '../modules/TemplateSelector';
+import { FlowTemplate, presetTemplates } from '../modules/TemplateSelector';
 import { audioNodeManager } from '../utils/AudioNodeManager';
 import ButtonTestVCOModulation from '@/modules/ButtonTestVCOModulation';
 import NodeAmplitudeEnvelope from '@/modules/NodeAmplitudeEnvelope';
@@ -34,6 +34,7 @@ import NodeFMSynth from '@/modules/NodeFMSynth';
 import NodeMonoSynth from '@/modules/NodeMonoSynth';
 import NodeMembraneSynth from '@/modules/NodeMembraneSynth';
 import NodeNoiseSynth from '@/modules/NodeNoiseSynth';
+import NodeMenu from './NodeMenu';
 
 const debug = false;
 
@@ -353,72 +354,15 @@ const NodeEditor = () => {
 
   return (
     <Box sx={{ width: '100%', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <Box sx={{ p: 2, borderBottom: '1px solid #ccc', backgroundColor: 'white' }}>
-        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
-          <Button variant="contained" onClick={() => addNode('vco')}>
-            VCO
-          </Button>
-          <Button variant="contained" onClick={() => addNode('filter')}>
-            Filter
-          </Button>
-          <Button variant="contained" onClick={() => addNode('delay')}>
-            Delay
-          </Button>
-          <Button variant="contained" onClick={() => addNode('reverb')}>
-            Reverb
-          </Button>
-          <Button variant="contained" onClick={() => addNode('lfo')}>
-            LFO
-          </Button>
-          <Button variant="contained" onClick={() => addNode('oscilloscope')}>
-            Oscilloscope
-          </Button>
-          <Button variant="contained" onClick={() => addNode('amplitudeEnvelope')}>
-            Envelope
-          </Button>
-          <Button variant="contained" onClick={() => addNode('sequencer')}>
-            Sequencer
-          </Button>
-          <Button variant="contained" onClick={() => addNode('noteToCV')}>
-            Note→CV
-          </Button>
-          <Button variant="contained" onClick={() => addNode('keyboard')}>
-            Keyboard
-          </Button>
-          <Button variant="contained" onClick={() => addNode('amSynth')}>
-            AM Synth
-          </Button>
-          <Button variant="contained" onClick={() => addNode('fmSynth')}>
-            FM Synth
-          </Button>
-          <Button variant="contained" onClick={() => addNode('monoSynth')}>
-            Mono Synth
-          </Button>
-          <Button variant="contained" onClick={() => addNode('membraneSynth')}>
-            Membrane
-          </Button>
-          <Button variant="contained" onClick={() => addNode('noiseSynth')}>
-            Noise
-          </Button>
-        </Stack>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
-          <TemplateSelector onApplyTemplate={handleApplyTemplate} />
-        </Box>
-        {debug && (
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
-            <Button
-              variant="contained"
-              color="warning"
-              onClick={() => {
-                console.log('Nodes:', nodes);
-                console.log('Edges:', edges);
-              }}
-            >
-              Debug Nodes/Edges
-            </Button>
-          </Box>
-        )}
-      </Box>
+      <NodeMenu
+        onAddNode={addNode}
+        onApplyTemplate={handleApplyTemplate}
+        debug={debug}
+        onDebugLog={() => {
+          console.log('Nodes:', nodes);
+          console.log('Edges:', edges);
+        }}
+      />
       <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
         <ReactFlow
           nodes={nodes.map((node) => ({
