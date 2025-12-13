@@ -95,7 +95,15 @@ const NodeAmplitudeEnvelope = ({ data, id }: NodeAmplitudeEnvelopeProps) => {
           onMouseDown={handleTriggerStart}
           onMouseUp={handleTriggerEnd}
           onMouseLeave={handleTriggerEnd}
-          sx={{ width: '100%' }}
+          onTouchStart={(e) => {
+            e.preventDefault(); // Prevent scrolling/context menu and ghost mouse events
+            handleTriggerStart();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleTriggerEnd();
+          }}
+          sx={{ width: '100%', touchAction: 'none' }}
         >
           Trigger
         </Button>

@@ -295,7 +295,15 @@ const NodeKeyboard = ({ data, id }: NodeProps) => {
                   key={key.note}
                   onMouseDown={() => handleMouseDown(key.note)}
                   onMouseUp={handleMouseUp}
-                  style={style}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    handleMouseDown(key.note);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    handleMouseUp();
+                  }}
+                  style={{ ...style, touchAction: 'none' }}
                 >
                   {!isBlack && key.label}
                 </div>

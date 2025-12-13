@@ -6,12 +6,8 @@ import NodeEditor from '@/components/NodeEditor';
 export default function NodeModularPage() {
   return (
     <Container maxWidth={false}>
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h5" component="h1" gutterBottom>
-          Node Modular <small>(v0.0.3)</small>
-        </Typography>
-        <NodeEditor />
-      </Box>
+      <NodeEditor />
+
     </Container>
   );
 }
