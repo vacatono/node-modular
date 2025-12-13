@@ -299,7 +299,12 @@ const NodeEditor = () => {
     nodesToDelete.forEach((node) => {
       audioNodeManager.deleteAudioNode(node.id);
     });
-  }, []);
+
+    // 削除されたノードに関連するエッジも削除する
+    setEdges((eds) => eds.filter(
+      (edge) => !nodesToDelete.some((node) => node.id === edge.source || node.id === edge.target)
+    ));
+  }, [setEdges]);
 
   // ノードを追加する関数
   const addNode = useCallback(
