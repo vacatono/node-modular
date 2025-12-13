@@ -35,6 +35,7 @@ import NodeMonoSynth from '@/modules/NodeMonoSynth';
 import NodeMembraneSynth from '@/modules/NodeMembraneSynth';
 import NodeNoiseSynth from '@/modules/NodeNoiseSynth';
 import NodeMenu from './NodeMenu';
+import DeletableEdge from './DeletableEdge';
 
 const debug = false;
 
@@ -58,11 +59,15 @@ const nodeTypes: NodeTypes = {
   noiseSynth: NodeNoiseSynth,
 };
 
+const edgeTypes = {
+  deletable: DeletableEdge,
+};
+
 // 初期ノードを定義
 const initialNodes: Node[] = presetTemplates[0].nodes.map((node) => ({ ...node, dragHandle: '.custom-drag-handle' }));
 
 // 初期エッジを定義
-const initialEdges: Edge[] = presetTemplates[0].edges;
+const initialEdges: Edge[] = presetTemplates[0].edges.map((edge) => ({ ...edge, type: 'deletable' }));
 
 const NodeEditor = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -241,6 +246,7 @@ const NodeEditor = () => {
           sourceType: sourceType || 'audio',
           sourceProperty: extractProperty(params.sourceHandle),
         },
+        type: 'deletable',
       };
 
       setEdges((eds) => {
@@ -347,7 +353,7 @@ const NodeEditor = () => {
       templateEdgesToProcess.current = template.edges;
 
       setNodes(template.nodes.map((n) => ({ ...n, dragHandle: '.custom-drag-handle' })));
-      setEdges(template.edges);
+      setEdges(template.edges.map((e) => ({ ...e, type: 'deletable' })));
     },
     [setNodes, setEdges]
   );
@@ -382,6 +388,7 @@ const NodeEditor = () => {
           onEdgesDelete={onEdgesDelete}
           onNodesDelete={onNodesDelete}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           style={{ width: '100%', height: '100%' }}
           nodesDraggable={true}
           nodesConnectable={true}
