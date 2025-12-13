@@ -54,7 +54,7 @@ class MembraneSynthNode extends Tone.ToneAudioNode {
     return this;
   }
 
-  triggerAttackRelease(duration: Tone.Unit.Time | Tone.Unit.Time[], time?: Tone.Unit.Time, velocity?: number): this {
+  triggerAttackRelease(duration: Tone.Unit.Time, time?: Tone.Unit.Time, velocity?: number): this {
     this.synth.triggerAttackRelease(this.currentNote, duration, time, velocity);
     return this;
   }
@@ -132,7 +132,7 @@ const NodeMembraneSynth = ({ data, id }: NodeMembraneSynthProps) => {
   return (
     <NodeBox
       id={id}
-      label={data.label || "Membrane Synth"}
+      label={data.label || 'Membrane Synth'}
       hasInputHandle={false}
       hasOutputHandle={true}
       hasControl1Handle={true}

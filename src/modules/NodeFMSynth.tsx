@@ -66,7 +66,7 @@ class FMSynthNode extends Tone.ToneAudioNode {
     return this;
   }
 
-  triggerAttackRelease(duration: Tone.Unit.Time | Tone.Unit.Time[], time?: Tone.Unit.Time, velocity?: number): this {
+  triggerAttackRelease(duration: Tone.Unit.Time, time?: Tone.Unit.Time, velocity?: number): this {
     this.synth.triggerAttackRelease(this.currentNote, duration, time, velocity);
     return this;
   }
@@ -199,7 +199,7 @@ const NodeFMSynth = ({ data, id }: NodeFMSynthProps) => {
   return (
     <NodeBox
       id={id}
-      label={data.label || "FM Synth"}
+      label={data.label || 'FM Synth'}
       width={460} // doubled width
       hasInputHandle={false}
       hasOutputHandle={true}

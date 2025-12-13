@@ -211,8 +211,8 @@ const NodeKeyboard = ({ data, id }: NodeProps) => {
       }}
     >
       <Button
-        variant={isHold ? "contained" : "outlined"}
-        color={isHold ? "secondary" : "primary"}
+        variant={isHold ? 'contained' : 'outlined'}
+        color={isHold ? 'secondary' : 'primary'}
         onClick={() => {
           const newHold = !isHold;
           setIsHold(newHold);

@@ -100,7 +100,7 @@ const NodeNoiseSynth = ({ data, id }: NodeNoiseSynthProps) => {
   return (
     <NodeBox
       id={id}
-      label={data.label || "Noise Synth"}
+      label={data.label || 'Noise Synth'}
       hasInputHandle={false}
       hasOutputHandle={true}
       hasControl1Handle={true}

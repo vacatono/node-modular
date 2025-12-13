@@ -391,7 +391,7 @@ const NodeVCO = ({ data, id }: NodeVCOProps) => {
       </Box>
       <Box sx={{ mt: 2 }}>
         <CustomSlider
-          label={isFrequencyControlled ? "Frequency (Controlled by CV/Note)" : "Frequency"}
+          label={isFrequencyControlled ? 'Frequency (Controlled by CV/Note)' : 'Frequency'}
           min={20}
           max={2000}
           step={1}

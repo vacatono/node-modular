@@ -56,7 +56,7 @@ class AMSynthNode extends Tone.ToneAudioNode {
     return this;
   }
 
-  triggerAttackRelease(duration: Tone.Unit.Time | Tone.Unit.Time[], time?: Tone.Unit.Time, velocity?: number): this {
+  triggerAttackRelease(duration: Tone.Unit.Time, time?: Tone.Unit.Time, velocity?: number): this {
     this.synth.triggerAttackRelease(this.currentNote, duration, time, velocity);
     return this;
   }
@@ -135,7 +135,7 @@ const NodeAMSynth = ({ data, id }: NodeAMSynthProps) => {
   return (
     <NodeBox
       id={id}
-      label={data.label || "AM Synth"}
+      label={data.label || 'AM Synth'}
       hasInputHandle={false} // No audio input
       hasOutputHandle={true}
       hasControl1Handle={true}
